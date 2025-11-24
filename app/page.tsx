@@ -9,6 +9,7 @@ import { Wallet, CreditCard as CreditCardIcon } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts"
+import { getCategoryIcon } from "@/lib/category-icons"
 
 export default function Dashboard() {
   const { accounts, transactions, categories } = useStore()
@@ -281,8 +282,10 @@ export default function Dashboard() {
                       className="w-10 h-10 rounded-full flex items-center justify-center text-white"
                       style={{ backgroundColor: category?.color || '#999' }}
                     >
-                      {/* We would use Lucide icons here dynamically but for now just first letter */}
-                      {category?.name[0]}
+                      {(() => {
+                        const Icon = getCategoryIcon(category?.icon)
+                        return <Icon className="h-5 w-5" />
+                      })()}
                     </div>
                     <div>
                       <p className="font-medium">{category?.name || 'Unknown'}</p>

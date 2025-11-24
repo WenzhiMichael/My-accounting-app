@@ -8,6 +8,7 @@ import { Calendar, Delete, Repeat, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useStore, TransactionType } from "@/lib/store"
+import { categoryIconMap, defaultCategoryIcon, getCategoryIcon } from "@/lib/category-icons"
 
 type RecurringType = 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY'
 
@@ -18,7 +19,9 @@ export default function AddExpensePage() {
     const [amount, setAmount] = useState("0")
     const [note, setNote] = useState("")
     const [date, setDate] = useState(new Date().toISOString())
-    const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(categories[0]?.id)
+    const firstExpenseId = useMemo(() => categories.find(c => c.type === 'EXPENSE')?.id, [categories])
+    const firstIncomeId = useMemo(() => categories.find(c => c.type === 'INCOME')?.id, [categories])
+    const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(firstExpenseId)
     const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>(
         preferences.lastAccountId || accounts[0]?.id
     )
@@ -28,6 +31,35 @@ export default function AddExpensePage() {
     const [recurringInterval, setRecurringInterval] = useState(1)
     const [toast, setToast] = useState<string | null>(null)
     const [shakeCategory, setShakeCategory] = useState(false)
+    const filteredCategories = useMemo(
+        () => categories.filter(cat => {
+            const targetType = type === 'INCOME' ? 'INCOME' : 'EXPENSE'
+            // fallback: if legacy category has no type, keep it visible
+            return !cat.type || cat.type === targetType
+        }),
+        [categories, type]
+    )
+    const selectedCategory = useMemo(
+        () => filteredCategories.find(c => c.id === selectedCategoryId),
+        [filteredCategories, selectedCategoryId]
+    )
+    const SelectedCategoryIcon = useMemo(() => {
+        const key = selectedCategory?.icon?.toLowerCase() || ""
+        return categoryIconMap[key] || defaultCategoryIcon
+    }, [selectedCategory])
+
+    const groupedCategories = useMemo(() => {
+        const order = ['餐饮美食', '交通出行', '购物消费', '居住缴费', '休闲娱乐', '医疗教育', '人情往来', '其他', '收入']
+        const map = new Map<string, typeof categories>()
+        filteredCategories.forEach(cat => {
+            const g = cat.group || '其他'
+            if (!map.has(g)) map.set(g, [])
+            map.get(g)?.push(cat)
+        })
+        return order
+            .map(name => ({ name, items: map.get(name) || [] }))
+            .filter(group => group.items.length > 0)
+    }, [filteredCategories])
 
     useEffect(() => {
         if (!selectedAccountId && accounts.length > 0) {
@@ -35,13 +67,6 @@ export default function AddExpensePage() {
             setSelectedAccountId(preferences.lastAccountId || accounts[0].id)
         }
     }, [accounts, selectedAccountId, preferences.lastAccountId])
-
-    useEffect(() => {
-        if (!selectedCategoryId && categories.length > 0) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setSelectedCategoryId(categories[0].id)
-        }
-    }, [categories, selectedCategoryId])
 
     const suggestions = useMemo(() => {
         const q = note.trim().toLowerCase()
@@ -150,14 +175,14 @@ export default function AddExpensePage() {
                         )}
                     />
                     <button
-                        onClick={() => { setType('EXPENSE'); setSelectedCategoryId(categories[0]?.id) }}
+                        onClick={() => { setType('EXPENSE'); setSelectedCategoryId(firstExpenseId) }}
                         className={cn("relative z-10 px-4 py-1 rounded-full text-sm font-medium transition-all",
                             type === 'EXPENSE' ? "text-foreground" : "text-muted-foreground")}
                     >
                         Expense
                     </button>
                     <button
-                        onClick={() => { setType('INCOME'); setSelectedCategoryId(categories[0]?.id) }}
+                        onClick={() => { setType('INCOME'); setSelectedCategoryId(firstIncomeId) }}
                         className={cn("relative z-10 px-4 py-1 rounded-full text-sm font-medium transition-all",
                             type === 'INCOME' ? "text-foreground" : "text-muted-foreground")}
                     >
@@ -168,32 +193,42 @@ export default function AddExpensePage() {
             </header>
 
             {/* Category Grid */}
-            <div className="flex-1 overflow-y-auto p-4">
-                <div className="grid grid-cols-4 gap-4">
-                    {categories.map(cat => (
-                        <button
-                            key={cat.id}
-                            onClick={() => setSelectedCategoryId(cat.id)}
-                            className={cn(
-                                "flex flex-col items-center gap-2 transition-all",
-                                shakeCategory ? "animate-pulse" : ""
-                            )}
-                        >
-                            <div
-                                className={cn(
-                                    "w-14 h-14 rounded-full flex items-center justify-center transition-all",
-                                    selectedCategoryId === cat.id ? "scale-110 ring-2 ring-offset-2 ring-primary" : "bg-secondary"
-                                )}
-                                style={{ backgroundColor: selectedCategoryId === cat.id ? cat.color : undefined }}
-                            >
-                                <span className={cn("text-xl font-bold", selectedCategoryId === cat.id ? "text-white" : "text-foreground")}>
-                                    {cat.name[0]}
-                                </span>
-                            </div>
-                            <span className="text-xs text-muted-foreground">{cat.name}</span>
-                        </button>
-                    ))}
-                </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {groupedCategories.map(group => (
+                    <div key={group.name} className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                            <span>{group.name}</span>
+                            <div className="h-px bg-border flex-1" />
+                        </div>
+                        <div className="grid grid-cols-4 gap-3">
+                            {group.items.map(cat => {
+                                const Icon = getCategoryIcon(cat.icon)
+                                const isSelected = selectedCategoryId === cat.id
+                                return (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => setSelectedCategoryId(cat.id)}
+                                        className={cn(
+                                            "flex flex-col items-center gap-2 transition-all",
+                                            shakeCategory && isSelected ? "animate-pulse" : ""
+                                        )}
+                                    >
+                                        <div
+                                            className={cn(
+                                                "w-14 h-14 rounded-full flex items-center justify-center transition-all",
+                                                isSelected ? "scale-110 ring-2 ring-offset-2 ring-primary" : "bg-secondary"
+                                            )}
+                                            style={{ backgroundColor: isSelected ? cat.color : undefined }}
+                                        >
+                                            <Icon className={cn("h-6 w-6", isSelected ? "text-white" : "text-foreground")} />
+                                        </div>
+                                        <span className="text-[11px] text-muted-foreground text-center leading-tight">{cat.name}</span>
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </div>
+                ))}
             </div>
 
             {/* Input Area */}
@@ -203,11 +238,13 @@ export default function AddExpensePage() {
                     <div className="flex items-center gap-2">
                         <div className="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm">
                             <div
-                                className="w-6 h-6 rounded-full"
-                                style={{ backgroundColor: categories.find(c => c.id === selectedCategoryId)?.color }}
-                            />
+                                className="w-6 h-6 rounded-full flex items-center justify-center"
+                                style={{ backgroundColor: selectedCategory?.color }}
+                            >
+                                <SelectedCategoryIcon className="h-4 w-4 text-white" />
+                            </div>
                         </div>
-                        <span className="font-medium">{categories.find(c => c.id === selectedCategoryId)?.name || "Choose category"}</span>
+                        <span className="font-medium">{selectedCategory?.name || "Choose category"}</span>
                     </div>
                     <div className="text-4xl font-bold tracking-tight">
                         CA${amount}
@@ -301,7 +338,7 @@ export default function AddExpensePage() {
                     <div />
                     <Key val="." onClick={handleDigit} />
                     <Key val="0" onClick={handleDigit} />
-                    <button onClick={handleBackspace} className="flex items-center justify-center h-14 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm active:scale-95 transition-transform">
+                    <button onClick={handleBackspace} className="flex items-center justify-center h-14 rounded-2xl bg-white text-foreground border border-border dark:bg-zinc-800 dark:text-white shadow-sm active:scale-95 transition-transform">
                         <Delete className="h-6 w-6" />
                     </button>
                     <button
@@ -341,7 +378,7 @@ function Key({ val, onClick }: Readonly<{ val: string, onClick: (v: string) => v
     return (
         <button
             onClick={() => onClick(val)}
-            className="flex items-center justify-center h-14 rounded-2xl bg-white dark:bg-zinc-800 text-2xl font-medium shadow-sm active:scale-95 transition-transform"
+            className="flex items-center justify-center h-14 rounded-2xl bg-white text-foreground border border-border dark:bg-zinc-800 dark:text-white text-2xl font-medium shadow-sm active:scale-95 transition-transform"
         >
             {val}
         </button>
