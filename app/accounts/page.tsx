@@ -33,46 +33,48 @@ export default function AccountsPage() {
                 {accounts.map((account) => {
                     const Icon = getIcon(account.type)
                     return (
-                        <Card key={account.id} className="overflow-hidden transition-all active:scale-[0.98]">
-                            <CardContent className="p-0">
-                                <div
-                                    className="h-2 w-full"
-                                    style={{ backgroundColor: account.color }}
-                                />
-                                <div className="p-5 flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center">
-                                            <Icon className="h-6 w-6 text-foreground" />
+                        <Link key={account.id} href={`/accounts/${account.id}`}>
+                            <Card className="overflow-hidden transition-all active:scale-[0.98] hover:border-primary">
+                                <CardContent className="p-0">
+                                    <div
+                                        className="h-2 w-full"
+                                        style={{ backgroundColor: account.color }}
+                                    />
+                                    <div className="p-5 flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center">
+                                                <Icon className="h-6 w-6 text-foreground" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold text-lg">{account.name}</h3>
+                                                <p className="text-sm text-muted-foreground capitalize">
+                                                    {account.type.toLowerCase()}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h3 className="font-semibold text-lg">{account.name}</h3>
-                                            <p className="text-sm text-muted-foreground capitalize">
-                                                {account.type.toLowerCase()}
+                                        <div className="text-right">
+                                            <p className="text-sm text-muted-foreground">Balance</p>
+                                            <p className={cn(
+                                                "text-xl font-bold",
+                                                account.balance < 0 ? "text-destructive" : "text-primary"
+                                            )}>
+                                                CA${account.balance.toLocaleString()}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-sm text-muted-foreground">Balance</p>
-                                        <p className={cn(
-                                            "text-xl font-bold",
-                                            account.balance < 0 ? "text-destructive" : "text-primary"
-                                        )}>
-                                            ¥{account.balance.toLocaleString()}
-                                        </p>
-                                    </div>
-                                </div>
-                                {account.type === 'CREDIT' && (
-                                    <div className="px-5 pb-5 pt-0 flex gap-4 text-xs text-muted-foreground">
-                                        <div className="bg-secondary/50 px-3 py-1 rounded-full">
-                                            Bill Day: {account.billingDay || '-'}
+                                    {account.type === 'CREDIT' && (
+                                        <div className="px-5 pb-5 pt-0 flex gap-4 text-xs text-muted-foreground">
+                                            <div className="bg-secondary/50 px-3 py-1 rounded-full">
+                                                Bill Day: {account.billingDay || '-'}
+                                            </div>
+                                            <div className="bg-secondary/50 px-3 py-1 rounded-full">
+                                                Due Day: {account.dueDay || '-'}
+                                            </div>
                                         </div>
-                                        <div className="bg-secondary/50 px-3 py-1 rounded-full">
-                                            Due Day: {account.dueDay || '-'}
-                                        </div>
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </Link>
                     )
                 })}
 

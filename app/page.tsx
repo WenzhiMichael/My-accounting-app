@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useStore } from "@/lib/store"
@@ -8,6 +8,7 @@ import { format } from "date-fns"
 import { Wallet, CreditCard as CreditCardIcon } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts"
 
 export default function Dashboard() {
   const { accounts, transactions, categories } = useStore()
@@ -19,8 +20,6 @@ export default function Dashboard() {
     setIsClient(true)
   }, [])
 
-  if (!isClient) return null
-
   const totalAssets = accounts
     .filter(a => a.type !== 'CREDIT')
     .reduce((sum, a) => sum + a.balance, 0)
@@ -29,9 +28,46 @@ export default function Dashboard() {
     .filter(a => a.type === 'CREDIT')
     .reduce((sum, a) => sum + a.balance, 0)
 
-  const recentTransactions = transactions
+  const now = useMemo(() => new Date(), [])
+  const monthlyTransactions = useMemo(() => transactions.filter(tx => {
+    const d = new Date(tx.date)
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+  }), [transactions, now])
+
+  const monthExpense = monthlyTransactions
+    .filter(tx => tx.type === 'EXPENSE')
+    .reduce((sum, tx) => sum + tx.amount, 0)
+
+  const monthIncome = monthlyTransactions
+    .filter(tx => tx.type === 'INCOME')
+    .reduce((sum, tx) => sum + tx.amount, 0)
+
+  const monthBalance = monthIncome - monthExpense
+
+  const expenseByCategory = useMemo(() => categories
+    .map(cat => {
+      const value = monthlyTransactions
+        .filter(tx => tx.type === 'EXPENSE' && tx.categoryId === cat.id)
+        .reduce((sum, tx) => sum + tx.amount, 0)
+      return { name: cat.name, value, color: cat.color }
+    })
+    .filter(item => item.value > 0), [categories, monthlyTransactions])
+
+  const accountExpense = useMemo(() => accounts
+    .map(acc => {
+      const value = monthlyTransactions
+        .filter(tx => tx.type === 'EXPENSE' && tx.accountId === acc.id)
+        .reduce((sum, tx) => sum + tx.amount, 0)
+      return { name: acc.name, value, color: acc.color }
+    })
+    .filter(item => item.value > 0), [accounts, monthlyTransactions])
+
+  const recentTransactions = useMemo(() => transactions
+    .slice()
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5)
+    .slice(0, 5), [transactions])
+
+  if (!isClient) return null
 
   return (
     <main className="min-h-screen bg-background p-4 space-y-6">
@@ -39,38 +75,128 @@ export default function Dashboard() {
       <header className="flex justify-between items-center pt-8 pb-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
-          <p className="text-muted-foreground">Welcome back</p>
+          <p className="text-muted-foreground">This month in CAD</p>
         </div>
-        <Link href="/accounts">
-          <Button variant="outline" size="icon" className="rounded-full">
-            <Wallet className="h-5 w-5" />
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/expenses/new">
+            <Button size="sm" className="rounded-full">Add</Button>
+          </Link>
+          <Link href="/accounts">
+            <Button variant="outline" size="icon" className="rounded-full">
+              <Wallet className="h-5 w-5" />
+            </Button>
+          </Link>
+        </div>
       </header>
 
-      {/* Net Worth Card */}
-      <section className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="bg-primary text-primary-foreground border-none">
-            <CardContent className="p-6">
-              <p className="text-sm opacity-80">Net Worth</p>
-              <h2 className="text-2xl font-bold mt-1">
-                ¥{netWorth.toLocaleString()}
-              </h2>
-            </CardContent>
-          </Card>
-          <Card className="bg-secondary border-none">
-            <CardContent className="p-6">
-              <p className="text-sm text-muted-foreground">Monthly Exp.</p>
-              <h2 className="text-2xl font-bold mt-1 text-foreground">
-                ¥{transactions
-                  .filter(t => t.type === 'EXPENSE' && new Date(t.date).getMonth() === new Date().getMonth())
-                  .reduce((sum, t) => sum + t.amount, 0)
-                  .toLocaleString()}
-              </h2>
-            </CardContent>
-          </Card>
+      {/* Monthly summary */}
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="bg-destructive text-destructive-foreground border-none">
+          <CardContent className="p-6">
+            <p className="text-sm opacity-80">This month spent</p>
+            <h2 className="text-3xl font-bold mt-1">
+              CA${monthExpense.toLocaleString()}
+            </h2>
+          </CardContent>
+        </Card>
+        <Card className="bg-emerald-500 text-white border-none">
+          <CardContent className="p-6">
+            <p className="text-sm opacity-80">This month income</p>
+            <h2 className="text-3xl font-bold mt-1">
+              CA${monthIncome.toLocaleString()}
+            </h2>
+          </CardContent>
+        </Card>
+        <Card className="bg-primary text-primary-foreground border-none">
+          <CardContent className="p-6">
+            <p className="text-sm opacity-80">Balance</p>
+            <h2 className="text-3xl font-bold mt-1">
+              CA${monthBalance.toLocaleString()}
+            </h2>
+          </CardContent>
+        </Card>
+      </section>
+
+      <div className="grid grid-cols-2 gap-2">
+        <Link href="/expenses/all">
+          <Button variant="outline" className="w-full rounded-xl">All Expenses</Button>
+        </Link>
+        <Link href="/income">
+          <Button variant="outline" className="w-full rounded-xl">All Income</Button>
+        </Link>
+      </div>
+
+      {/* Category breakdown */}
+      <section className="space-y-3">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">Category breakdown</h3>
+          <span className="text-sm text-muted-foreground">Expenses only</span>
         </div>
+        {expenseByCategory.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="p-6 text-center text-muted-foreground">
+              Add an expense to see your chart.
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-0 h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    dataKey="value"
+                    data={expenseByCategory}
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={2}
+                  >
+                    {expenseByCategory.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} stroke="none" />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value: number, _name: string, props) => [`CA$${value.toLocaleString()}`, props?.payload?.name]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+      </section>
+
+      {/* Account spend */}
+      <section className="space-y-3">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">Accounts this month</h3>
+          <p className="text-sm text-muted-foreground">Net worth: CA${netWorth.toLocaleString()}</p>
+        </div>
+        {accountExpense.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="p-6 text-center text-muted-foreground">
+              No spending tracked this month.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {accountExpense.map(acc => (
+              <Card key={acc.name} className="overflow-hidden">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="h-10 w-10 rounded-full"
+                      style={{ backgroundColor: acc.color }}
+                    />
+                    <div>
+                      <p className="font-semibold">{acc.name}</p>
+                      <p className="text-xs text-muted-foreground">Spend this month</p>
+                    </div>
+                  </div>
+                  <p className="text-lg font-semibold text-destructive">-CA${acc.value.toLocaleString()}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Credit Cards Status */}
@@ -170,7 +296,7 @@ export default function Dashboard() {
                     "font-medium",
                     tx.type === 'EXPENSE' ? "text-foreground" : "text-green-600"
                   )}>
-                    {tx.type === 'EXPENSE' ? '-' : '+'}¥{tx.amount.toLocaleString()}
+                    {tx.type === 'EXPENSE' ? '-' : '+'}CA${tx.amount.toLocaleString()}
                   </span>
                 </div>
               )

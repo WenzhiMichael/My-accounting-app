@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, CreditCard, Plus, PieChart, Settings } from "lucide-react"
+import { LayoutDashboard, CreditCard, Plus, ListChecks, Settings } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function BottomNav() {
@@ -12,7 +12,7 @@ export function BottomNav() {
         { href: "/", icon: LayoutDashboard, label: "Home" },
         { href: "/accounts", icon: CreditCard, label: "Accounts" },
         { href: "/expenses/new", icon: Plus, label: "Add", isFab: true },
-        { href: "/reports", icon: PieChart, label: "Reports" },
+        { href: "/expenses", icon: ListChecks, label: "Transactions" },
         { href: "/settings", icon: Settings, label: "Settings" },
     ]
 

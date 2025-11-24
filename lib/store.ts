@@ -36,17 +36,33 @@ export interface Category {
     color: string
 }
 
+export type ThemePreference = 'system' | 'light' | 'dark'
+
+export interface Preferences {
+    theme: ThemePreference
+    appLockEnabled: boolean
+    lastAccountId?: string
+    passcode?: string
+}
+
 interface AppState {
     accounts: Account[]
     transactions: Transaction[]
     categories: Category[]
+    preferences: Preferences
 
     addAccount: (account: Omit<Account, 'id'>) => void
     updateAccount: (id: string, updates: Partial<Account>) => void
     deleteAccount: (id: string) => void
 
     addTransaction: (transaction: Omit<Transaction, 'id'>) => void
+    updateTransaction: (id: string, updates: Partial<Omit<Transaction, 'id'>>) => void
     deleteTransaction: (id: string) => void
+
+    setTheme: (theme: ThemePreference) => void
+    setAppLockEnabled: (enabled: boolean) => void
+    setLastAccountId: (accountId?: string) => void
+    setPasscode: (passcode?: string) => void
 
     // Computed helpers
     getAccountBalance: (accountId: string) => number
@@ -67,6 +83,12 @@ export const useStore = create<AppState>()(
             accounts: [],
             transactions: [],
             categories: DEFAULT_CATEGORIES,
+            preferences: {
+                theme: 'system',
+                appLockEnabled: false,
+                lastAccountId: undefined,
+                passcode: undefined,
+            },
 
             addAccount: (account) => set((state) => ({
                 accounts: [...state.accounts, { ...account, id: uuidv4() }]
@@ -86,7 +108,7 @@ export const useStore = create<AppState>()(
                 const newTransaction = { ...transaction, id: uuidv4() }
 
                 // Update account balances
-                const accounts = [...state.accounts]
+                const accounts = state.accounts.map(acc => ({ ...acc }))
                 const accountIndex = accounts.findIndex(a => a.id === transaction.accountId)
 
                 if (accountIndex >= 0) {
@@ -106,8 +128,54 @@ export const useStore = create<AppState>()(
 
                 return {
                     transactions: [newTransaction, ...state.transactions],
-                    accounts
+                    accounts,
+                    preferences: {
+                        ...state.preferences,
+                        lastAccountId: transaction.accountId,
+                    }
                 }
+            }),
+
+            updateTransaction: (id, updates) => set((state) => {
+                const existingIndex = state.transactions.findIndex(t => t.id === id)
+                if (existingIndex === -1) return {}
+
+                const current = state.transactions[existingIndex]
+                const nextTx = {
+                    ...current,
+                    ...updates,
+                    targetAccountId: updates.type === 'TRANSFER' || current.type === 'TRANSFER'
+                        ? updates.targetAccountId ?? current.targetAccountId
+                        : undefined,
+                }
+
+                const accounts = state.accounts.map(acc => ({ ...acc }))
+
+                const applyBalances = (tx: Transaction, multiplier: 1 | -1) => {
+                    const sourceIndex = accounts.findIndex(a => a.id === tx.accountId)
+                    if (sourceIndex >= 0) {
+                        const source = accounts[sourceIndex]
+                        if (tx.type === 'EXPENSE') {
+                            source.balance -= multiplier * tx.amount
+                        } else if (tx.type === 'INCOME') {
+                            source.balance += multiplier * tx.amount
+                        } else if (tx.type === 'TRANSFER' && tx.targetAccountId) {
+                            source.balance -= multiplier * tx.amount
+                            const targetIndex = accounts.findIndex(a => a.id === tx.targetAccountId)
+                            if (targetIndex >= 0) {
+                                accounts[targetIndex].balance += multiplier * tx.amount
+                            }
+                        }
+                    }
+                }
+
+                applyBalances(current, -1)
+                applyBalances(nextTx as Transaction, 1)
+
+                const transactions = [...state.transactions]
+                transactions[existingIndex] = nextTx as Transaction
+
+                return { transactions, accounts }
             }),
 
             deleteTransaction: (id) => set((state) => {
@@ -115,7 +183,7 @@ export const useStore = create<AppState>()(
                 if (!tx) return {}
 
                 // Revert balance changes
-                const accounts = [...state.accounts]
+                const accounts = state.accounts.map(acc => ({ ...acc }))
                 const accountIndex = accounts.findIndex(a => a.id === tx.accountId)
 
                 if (accountIndex >= 0) {
@@ -138,6 +206,34 @@ export const useStore = create<AppState>()(
                     accounts
                 }
             }),
+
+            setTheme: (theme) => set((state) => ({
+                preferences: {
+                    ...state.preferences,
+                    theme,
+                }
+            })),
+
+            setAppLockEnabled: (enabled) => set((state) => ({
+                preferences: {
+                    ...state.preferences,
+                    appLockEnabled: enabled,
+                }
+            })),
+
+            setLastAccountId: (accountId) => set((state) => ({
+                preferences: {
+                    ...state.preferences,
+                    lastAccountId: accountId,
+                }
+            })),
+
+            setPasscode: (passcode) => set((state) => ({
+                preferences: {
+                    ...state.preferences,
+                    passcode,
+                }
+            })),
 
             getAccountBalance: (accountId) => {
                 return get().accounts.find(a => a.id === accountId)?.balance || 0

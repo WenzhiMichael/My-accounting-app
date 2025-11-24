@@ -11,13 +11,15 @@ import { format } from "date-fns"
 
 export default function AddExpensePage() {
     const router = useRouter()
-    const { accounts, categories, addTransaction } = useStore()
+    const { accounts, categories, addTransaction, preferences, setLastAccountId } = useStore()
 
     const [amount, setAmount] = useState("0")
     const [note, setNote] = useState("")
     const [date] = useState(new Date().toISOString())
     const [selectedCategoryId, setSelectedCategoryId] = useState(categories[0]?.id)
-    const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id)
+    const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>(
+        preferences.lastAccountId || accounts[0]?.id
+    )
     const [type, setType] = useState<TransactionType>('EXPENSE')
 
     // Calculator logic
@@ -39,7 +41,7 @@ export default function AddExpensePage() {
 
     const handleSubmit = () => {
         const finalAmount = parseFloat(amount)
-        if (finalAmount === 0) return
+        if (finalAmount === 0 || Number.isNaN(finalAmount) || !selectedAccountId || !selectedCategoryId) return
 
         addTransaction({
             amount: finalAmount,
@@ -50,6 +52,7 @@ export default function AddExpensePage() {
             note
         })
 
+        setLastAccountId(selectedAccountId)
         router.back()
     }
 
@@ -58,9 +61,24 @@ export default function AddExpensePage() {
         if (!selectedAccountId && accounts.length > 0) {
             // Ensure an account is selected once data is available
             // eslint-disable-next-line react-hooks/set-state-in-effect
-            setSelectedAccountId(accounts[0].id)
+            setSelectedAccountId(preferences.lastAccountId || accounts[0].id)
         }
-    }, [accounts, selectedAccountId])
+    }, [accounts, selectedAccountId, preferences.lastAccountId])
+
+    // Ensure we have a valid category selected
+    useEffect(() => {
+        if (!selectedCategoryId && categories.length > 0) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setSelectedCategoryId(categories[0].id)
+        }
+    }, [categories, selectedCategoryId])
+
+    const canSubmit = Boolean(
+        selectedAccountId &&
+        selectedCategoryId &&
+        !Number.isNaN(parseFloat(amount)) &&
+        parseFloat(amount) > 0
+    )
 
     if (accounts.length === 0) {
         return (
@@ -139,19 +157,27 @@ export default function AddExpensePage() {
                         <span className="font-medium">{categories.find(c => c.id === selectedCategoryId)?.name}</span>
                     </div>
                     <div className="text-4xl font-bold tracking-tight">
-                        ¥{amount}
+                        CA${amount}
                     </div>
                 </div>
 
                 {/* Controls */}
                 <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-                    <button className="flex items-center gap-2 bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm font-medium shadow-sm whitespace-nowrap">
+                    <div className="flex items-center gap-2 bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm font-medium shadow-sm whitespace-nowrap">
                         <Calendar className="h-4 w-4" />
-                        {format(new Date(date), "MMM d")}
-                    </button>
+                        <input
+                            type="datetime-local"
+                            value={format(new Date(date), "yyyy-MM-dd'T'HH:mm")}
+                            onChange={(e) => setDate(e.target.value ? new Date(e.target.value).toISOString() : new Date().toISOString())}
+                            className="bg-transparent outline-none"
+                        />
+                    </div>
                     <select
                         value={selectedAccountId}
-                        onChange={(e) => setSelectedAccountId(e.target.value)}
+                        onChange={(e) => {
+                            setSelectedAccountId(e.target.value)
+                            setLastAccountId(e.target.value)
+                        }}
                         className="bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm font-medium shadow-sm outline-none appearance-none"
                     >
                         {accounts.map(acc => (
@@ -188,6 +214,7 @@ export default function AddExpensePage() {
                     </button>
                     <button
                         onClick={handleSubmit}
+                        disabled={!canSubmit}
                         className="flex items-center justify-center h-14 rounded-2xl bg-primary text-primary-foreground shadow-lg active:scale-95 transition-transform font-bold text-lg"
                     >
                         OK
