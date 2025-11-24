@@ -7,6 +7,7 @@ import { useStore } from "@/lib/store"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { getCategoryIcon } from "@/lib/category-icons"
 
 const ALL_ACCOUNTS = "all"
 type Range = "all" | "week" | "month" | "halfyear"
@@ -146,7 +147,10 @@ export default function TransactionsPage() {
                                                 className="h-12 w-12 rounded-full flex items-center justify-center text-white font-semibold"
                                                 style={{ backgroundColor: category?.color || '#999' }}
                                             >
-                                                {category?.name?.[0] || '?'}
+                                                {(() => {
+                                                    const Icon = getCategoryIcon(category?.icon)
+                                                    return <Icon className="h-6 w-6" />
+                                                })()}
                                             </div>
                                             <div className="space-y-1">
                                                 <p className="font-medium">{category?.name || 'Uncategorized'}</p>
