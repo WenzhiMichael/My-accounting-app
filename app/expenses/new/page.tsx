@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useStore, TransactionType } from "@/lib/store"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, Calendar, Delete, X } from "lucide-react"
+import { Calendar, Delete, X } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
@@ -15,7 +15,7 @@ export default function AddExpensePage() {
 
     const [amount, setAmount] = useState("0")
     const [note, setNote] = useState("")
-    const [date, setDate] = useState(new Date().toISOString())
+    const [date] = useState(new Date().toISOString())
     const [selectedCategoryId, setSelectedCategoryId] = useState(categories[0]?.id)
     const [selectedAccountId, setSelectedAccountId] = useState(accounts[0]?.id)
     const [type, setType] = useState<TransactionType>('EXPENSE')
@@ -37,19 +37,6 @@ export default function AddExpensePage() {
         })
     }
 
-    const handleMath = (op: string) => {
-        // Simple evaluation for now, or just append if we want full calc
-        // For simplicity in v1, let's just allow simple entry. 
-        // If user wants to calculate 50+20, we can eval it.
-        try {
-            // eslint-disable-next-line no-eval
-            const result = eval(amount).toString()
-            setAmount(result)
-        } catch (e) {
-            // ignore
-        }
-    }
-
     const handleSubmit = () => {
         const finalAmount = parseFloat(amount)
         if (finalAmount === 0) return
@@ -69,6 +56,8 @@ export default function AddExpensePage() {
     // Ensure we have a valid account selected
     useEffect(() => {
         if (!selectedAccountId && accounts.length > 0) {
+            // Ensure an account is selected once data is available
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setSelectedAccountId(accounts[0].id)
         }
     }, [accounts, selectedAccountId])
@@ -180,15 +169,18 @@ export default function AddExpensePage() {
 
                 {/* Keypad */}
                 <div className="grid grid-cols-4 gap-3">
-                    {['7', '8', '9', 'date'].map(k => (
+                    {['7', '8', '9'].map(k => (
                         <Key key={k} val={k} onClick={handleDigit} />
                     ))}
-                    {['4', '5', '6', '+'].map(k => (
+                    <div />
+                    {['4', '5', '6'].map(k => (
                         <Key key={k} val={k} onClick={handleDigit} />
                     ))}
-                    {['1', '2', '3', '-'].map(k => (
+                    <div />
+                    {['1', '2', '3'].map(k => (
                         <Key key={k} val={k} onClick={handleDigit} />
                     ))}
+                    <div />
                     <Key val="." onClick={handleDigit} />
                     <Key val="0" onClick={handleDigit} />
                     <button onClick={handleBackspace} className="flex items-center justify-center h-14 rounded-2xl bg-white dark:bg-zinc-800 shadow-sm active:scale-95 transition-transform">
@@ -207,22 +199,6 @@ export default function AddExpensePage() {
 }
 
 function Key({ val, onClick }: { val: string, onClick: (v: string) => void }) {
-    if (val === 'date') {
-        // Placeholder for date picker trigger in keypad if needed, or just empty
-        return <div />
-    }
-
-    if (['+', '-'].includes(val)) {
-        return (
-            <button
-                onClick={() => onClick(val)}
-                className="flex items-center justify-center h-14 rounded-2xl bg-secondary text-foreground font-semibold text-xl active:scale-95 transition-transform"
-            >
-                {val}
-            </button>
-        )
-    }
-
     return (
         <button
             onClick={() => onClick(val)}

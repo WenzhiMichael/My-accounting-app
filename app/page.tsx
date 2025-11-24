@@ -14,6 +14,8 @@ export default function Dashboard() {
   const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
+    // Guard rendering until the component has mounted to avoid hydration issues
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsClient(true)
   }, [])
 
