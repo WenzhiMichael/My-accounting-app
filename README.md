@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Expense Tracker (Next.js)
 
-## Getting Started
+Multi-account tracker with mobile-friendly UI, app lock, theming, dashboards, and recurring-aware transactions.
 
-First, run the development server:
+## Core features
+
+- Dashboard: monthly income/expense/balance, category pie, per-account spend, recent transactions.
+- Transactions: filters by time (overall/7d/30d/6mo) and account, detailed edit, recurring metadata, note suggestions, custom keypad.
+- Accounts: add/edit/delete with colors and credit metadata.
+- Settings: light/dark/system theme, App Lock (biometric/passcode toggle).
+
+## Run locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# or to allow phone access on the same Wi‑Fi:
+npm run dev -- --hostname 0.0.0.0 --port 3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open [http://localhost:3000](http://localhost:3000) on your machine.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Access from your phone (same Wi‑Fi)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1) Find your computer’s LAN IP (e.g. `192.168.1.23`).  
+2) Start the dev server with `--hostname 0.0.0.0` (see above).  
+3) On your phone’s browser, visit `http://<LAN_IP>:3000` (e.g. `http://192.168.1.23:3000`).  
+The app is responsive and works on mobile.
 
-## Learn More
+## Paths to explore
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Dashboard: `app/page.tsx`
+- Transactions: `app/expenses/page.tsx`, `app/expenses/[id]/page.tsx`, `app/expenses/all/page.tsx`, `app/income/page.tsx`
+- Add/Edit transaction: `app/expenses/new/page.tsx`
+- Accounts: `app/accounts/page.tsx`, `app/accounts/[id]/page.tsx`
+- Settings & theming/app lock: `app/settings/page.tsx`, `components/layout/app-shell.tsx`, `app/globals.css`

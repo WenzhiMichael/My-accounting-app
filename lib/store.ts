@@ -27,6 +27,8 @@ export interface Transaction {
     categoryId: string
     date: string // ISO date string
     note?: string
+    recurringType?: 'DAILY' | 'WEEKLY' | 'MONTHLY'
+    recurringInterval?: number
 }
 
 export interface Category {

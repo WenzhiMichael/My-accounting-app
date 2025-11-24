@@ -2,17 +2,19 @@
 
 import Link from "next/link"
 import { useMemo, useState } from "react"
-import { format } from "date-fns"
+import { addDays, format, isAfter, isBefore, startOfDay } from "date-fns"
 import { useStore } from "@/lib/store"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
 const ALL_ACCOUNTS = "all"
+type Range = "all" | "week" | "month" | "halfyear"
 
 export default function TransactionsPage() {
     const { transactions, accounts, categories } = useStore()
     const [accountFilter, setAccountFilter] = useState<string>(ALL_ACCOUNTS)
+    const [range, setRange] = useState<Range>("all")
 
     const accountMap = useMemo(
         () => Object.fromEntries(accounts.map(acc => [acc.id, acc.name])),
@@ -23,47 +25,63 @@ export default function TransactionsPage() {
         [categories]
     )
 
-    const now = new Date()
-    const monthly = transactions.filter(tx => {
-        const d = new Date(tx.date)
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-    })
+    const rangeFiltered = useMemo(() => {
+        if (range === "all") return transactions
+        const now = new Date()
+        let start: Date
+        if (range === "week") {
+            start = addDays(now, -7)
+        } else if (range === "month") {
+            start = addDays(now, -30)
+        } else {
+            start = addDays(now, -180)
+        }
+        return transactions.filter(tx => {
+            const d = new Date(tx.date)
+            return (isAfter(d, startOfDay(start)) || +d === +startOfDay(start)) && (isBefore(d, now) || +d === +now)
+        })
+    }, [transactions, range])
 
-    const monthExpense = monthly
-        .filter(tx => tx.type === 'EXPENSE')
-        .reduce((sum, tx) => sum + tx.amount, 0)
-    const monthIncome = monthly
-        .filter(tx => tx.type === 'INCOME')
-        .reduce((sum, tx) => sum + tx.amount, 0)
-
-    const filtered = transactions
+    const filtered = useMemo(() => rangeFiltered
         .filter(tx => accountFilter === ALL_ACCOUNTS ? true : tx.accountId === accountFilter)
         .slice()
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), [rangeFiltered, accountFilter])
+
+    const totalIncome = filtered.filter(tx => tx.type === 'INCOME').reduce((sum, tx) => sum + tx.amount, 0)
+    const totalExpense = filtered.filter(tx => tx.type === 'EXPENSE').reduce((sum, tx) => sum + tx.amount, 0)
+    const totalBalance = totalIncome - totalExpense
 
     return (
         <main className="min-h-screen bg-background p-4 pb-24 space-y-4">
             <header className="flex items-center justify-between pt-8 pb-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
-                    <p className="text-sm text-muted-foreground">Recent activity across your accounts (CAD)</p>
+                    <p className="text-sm text-muted-foreground">Filtered activity across your accounts (CAD)</p>
                 </div>
                 <Link href="/expenses/new">
                     <Button size="icon" className="rounded-full shadow-lg">+</Button>
                 </Link>
             </header>
 
-            <section className="grid grid-cols-2 gap-3">
-                <Card className="bg-primary text-primary-foreground border-none">
-                    <CardContent className="p-4">
-                        <p className="text-sm opacity-80">This month spent</p>
-                        <p className="text-2xl font-bold mt-1">CA${monthExpense.toLocaleString()}</p>
-                    </CardContent>
-                </Card>
+            <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Card className="bg-secondary border-none">
                     <CardContent className="p-4">
-                        <p className="text-sm text-muted-foreground">This month income</p>
-                        <p className="text-2xl font-bold mt-1 text-foreground">CA${monthIncome.toLocaleString()}</p>
+                        <p className="text-sm text-muted-foreground">Total balance</p>
+                        <p className={cn("text-2xl font-bold mt-1", totalBalance < 0 ? "text-destructive" : "text-foreground")}>
+                            CA${totalBalance.toLocaleString()}
+                        </p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-primary text-primary-foreground border-none">
+                    <CardContent className="p-4">
+                        <p className="text-sm opacity-80">Income ({labelForRange(range)})</p>
+                        <p className="text-2xl font-bold mt-1">CA${totalIncome.toLocaleString()}</p>
+                    </CardContent>
+                </Card>
+                <Card className="bg-destructive text-destructive-foreground border-none">
+                    <CardContent className="p-4">
+                        <p className="text-sm opacity-80">Expense ({labelForRange(range)})</p>
+                        <p className="text-2xl font-bold mt-1">CA${totalExpense.toLocaleString()}</p>
                     </CardContent>
                 </Card>
             </section>
@@ -77,19 +95,35 @@ export default function TransactionsPage() {
                 </Link>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 bg-secondary px-2 py-1 rounded-full text-xs">
+                    {(["all", "week", "month", "halfyear"] as Range[]).map(r => (
+                        <button
+                            key={r}
+                            onClick={() => setRange(r)}
+                            className={cn(
+                                "px-3 py-1 rounded-full font-medium transition-colors",
+                                range === r ? "bg-background shadow-sm" : "text-muted-foreground"
+                            )}
+                        >
+                            {labelForRange(r)}
+                        </button>
+                    ))}
+                </div>
+
                 <select
                     value={accountFilter}
                     onChange={(e) => setAccountFilter(e.target.value)}
-                    className="w-full h-11 rounded-full bg-secondary px-4 text-sm font-medium outline-none border border-border"
+                    className="h-11 rounded-full bg-secondary px-4 text-sm font-medium outline-none border border-border"
                 >
                     <option value={ALL_ACCOUNTS}>All accounts</option>
                     {accounts.map(acc => (
                         <option key={acc.id} value={acc.id}>{acc.name}</option>
                     ))}
                 </select>
-                <Link href="/accounts/new">
-                    <Button variant="outline" size="sm">Add account</Button>
+
+                <Link href="/settings">
+                    <Button variant="outline" size="sm">Settings</Button>
                 </Link>
             </div>
 
@@ -141,4 +175,13 @@ export default function TransactionsPage() {
             </section>
         </main>
     )
+}
+
+function labelForRange(range: Range) {
+    switch (range) {
+        case "week": return "Last 7 days"
+        case "month": return "Last 30 days"
+        case "halfyear": return "Last 6 months"
+        default: return "Overall"
+    }
 }
