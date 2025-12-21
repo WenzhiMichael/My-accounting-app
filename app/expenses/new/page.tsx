@@ -6,7 +6,7 @@ import Link from "next/link"
 import { format } from "date-fns"
 import { Calendar, Delete, Repeat, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { cn, dateInputToStartOfDayIso, toStartOfDayIso } from "@/lib/utils"
 import { useStore, TransactionType } from "@/lib/store"
 import { categoryIconMap, defaultCategoryIcon, getCategoryIcon } from "@/lib/category-icons"
 
@@ -18,7 +18,7 @@ export default function AddExpensePage() {
 
     const [amount, setAmount] = useState("0")
     const [note, setNote] = useState("")
-    const [date, setDate] = useState(new Date().toISOString())
+    const [date, setDate] = useState(() => toStartOfDayIso(new Date()))
     const firstExpenseId = useMemo(() => categories.find(c => c.type === 'EXPENSE')?.id, [categories])
     const firstIncomeId = useMemo(() => categories.find(c => c.type === 'INCOME')?.id, [categories])
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(firstExpenseId)
@@ -87,7 +87,7 @@ export default function AddExpensePage() {
             .slice(0, 6)
     }, [note, transactions, selectedCategoryId, type])
 
-    const dateLabel = format(new Date(date), "MMM d, h:mm a")
+    const dateLabel = format(new Date(date), "MMM d, yyyy")
 
     const handleDigit = (digit: string) => {
         setToast(null)
@@ -355,15 +355,15 @@ export default function AddExpensePage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <div className="bg-card text-card-foreground rounded-2xl shadow-lg p-4 w-full max-w-md space-y-4">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-semibold">Choose date & time</h3>
+                            <h3 className="font-semibold">Choose date</h3>
                             <Button variant="ghost" size="icon" onClick={() => setShowDatePicker(false)}>
                                 <X className="h-5 w-5" />
                             </Button>
                         </div>
                         <input
-                            type="datetime-local"
-                            value={format(new Date(date), "yyyy-MM-dd'T'HH:mm")}
-                            onChange={(e) => setDate(e.target.value ? new Date(e.target.value).toISOString() : new Date().toISOString())}
+                            type="date"
+                            value={format(new Date(date), "yyyy-MM-dd")}
+                            onChange={(e) => setDate(dateInputToStartOfDayIso(e.target.value))}
                             className="w-full h-12 px-4 rounded-xl bg-secondary border border-border focus:ring-2 focus:ring-primary outline-none"
                         />
                         <Button className="w-full" onClick={() => setShowDatePicker(false)}>Done</Button>
