@@ -8,7 +8,18 @@ import { format } from "date-fns"
 import { Wallet, CreditCard as CreditCardIcon } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts"
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid
+} from "recharts"
 import { getCategoryIcon } from "@/lib/category-icons"
 
 export default function Dashboard() {
@@ -45,6 +56,14 @@ export default function Dashboard() {
 
   const monthBalance = monthIncome - monthExpense
 
+  const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0)
+  const totalIncome = transactions
+    .filter(tx => tx.type === 'INCOME')
+    .reduce((sum, tx) => sum + tx.amount, 0)
+  const totalExpense = transactions
+    .filter(tx => tx.type === 'EXPENSE')
+    .reduce((sum, tx) => sum + tx.amount, 0)
+
   const expenseByCategory = useMemo(() => categories
     .map(cat => {
       const value = monthlyTransactions
@@ -53,6 +72,25 @@ export default function Dashboard() {
       return { name: cat.name, value, color: cat.color }
     })
     .filter(item => item.value > 0), [categories, monthlyTransactions])
+
+  const monthlyExpenseTrend = useMemo(() => {
+    const months = Array.from({ length: 6 }, (_value, index) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1)
+      const value = transactions
+        .filter(tx => {
+          const txDate = new Date(tx.date)
+          return tx.type === 'EXPENSE'
+            && txDate.getMonth() === date.getMonth()
+            && txDate.getFullYear() === date.getFullYear()
+        })
+        .reduce((sum, tx) => sum + tx.amount, 0)
+      return {
+        name: format(date, "MMM"),
+        value
+      }
+    })
+    return months
+  }, [transactions, now])
 
   const accountExpense = useMemo(() => accounts
     .map(acc => {
@@ -90,6 +128,40 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {/* Overall summary */}
+      <section>
+        <Card className="bg-muted/40 border-none">
+          <CardContent className="p-6 space-y-5">
+            <div className="text-center space-y-1">
+              <p className="text-sm text-muted-foreground">Total Balance</p>
+              <h2
+                className={cn(
+                  "text-4xl font-bold tracking-tight",
+                  totalBalance < 0 ? "text-destructive" : "text-foreground"
+                )}
+              >
+                CA${totalBalance.toLocaleString()}
+              </h2>
+            </div>
+            <div className="flex items-center justify-between gap-4 text-sm">
+              <div className="flex flex-col">
+                <span className="text-muted-foreground">Income</span>
+                <span className="font-semibold text-emerald-600">
+                  +CA${totalIncome.toLocaleString()}
+                </span>
+              </div>
+              <div className="h-8 w-px bg-border" />
+              <div className="flex flex-col items-end">
+                <span className="text-muted-foreground">Expense</span>
+                <span className="font-semibold text-destructive">
+                  -CA${totalExpense.toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
       {/* Monthly summary */}
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="bg-destructive text-destructive-foreground border-none">
@@ -116,6 +188,48 @@ export default function Dashboard() {
             </h2>
           </CardContent>
         </Card>
+      </section>
+
+      {/* Monthly trend */}
+      <section className="space-y-3">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">Spending trend</h3>
+          <span className="text-sm text-muted-foreground">Last 6 months</span>
+        </div>
+        {monthlyExpenseTrend.every(item => item.value === 0) ? (
+          <Card className="border-dashed">
+            <CardContent className="p-6 text-center text-muted-foreground">
+              Add expenses to see your trend.
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-0 h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyExpenseTrend} margin={{ top: 16, right: 24, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `CA$${value}`}
+                  />
+                  <Tooltip
+                    formatter={(value: number) => [`CA$${value.toLocaleString()}`, "Expenses"]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
       </section>
 
       <div className="grid grid-cols-2 gap-2">
