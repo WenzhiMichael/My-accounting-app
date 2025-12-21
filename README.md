@@ -3,7 +3,7 @@
 Multi-account tracker with mobile-friendly UI, app lock, theming, dashboards, and recurring-aware transactions.
 
 Live site: https://my-accountingapp.vercel.app/
-
+ 
 ## Core features
 
 - Dashboard: monthly income/expense/balance, category pie, per-account spend, recent transactions.
