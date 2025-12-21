@@ -79,6 +79,14 @@ export default function Dashboard() {
     .filter(tx => tx.type === 'EXPENSE')
     .reduce((sum, tx) => sum + tx.amount, 0)
 
+  const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0)
+  const totalIncome = transactions
+    .filter(tx => tx.type === 'INCOME')
+    .reduce((sum, tx) => sum + tx.amount, 0)
+  const totalExpense = transactions
+    .filter(tx => tx.type === 'EXPENSE')
+    .reduce((sum, tx) => sum + tx.amount, 0)
+
   const expenseByCategory = useMemo(() => categories
     .map(cat => {
       const value = filteredTransactions
@@ -87,6 +95,25 @@ export default function Dashboard() {
       return { name: cat.name, value, color: cat.color }
     })
     .filter(item => item.value > 0), [categories, filteredTransactions])
+
+  const monthlyExpenseTrend = useMemo(() => {
+    const months = Array.from({ length: 6 }, (_value, index) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1)
+      const value = transactions
+        .filter(tx => {
+          const txDate = new Date(tx.date)
+          return tx.type === 'EXPENSE'
+            && txDate.getMonth() === date.getMonth()
+            && txDate.getFullYear() === date.getFullYear()
+        })
+        .reduce((sum, tx) => sum + tx.amount, 0)
+      return {
+        name: format(date, "MMM"),
+        value
+      }
+    })
+    return months
+  }, [transactions, now])
 
   const monthlyExpenseTrend = useMemo(() => {
     const months = Array.from({ length: 6 }, (_value, index) => {
@@ -315,6 +342,71 @@ export default function Dashboard() {
                   />
                 </PieChart>
               </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+      </section>
+
+      {/* Recent Transactions */}
+      <section className="space-y-3">
+        <h3 className="text-lg font-semibold">Recent Transactions</h3>
+        {recentTransactions.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="p-6 text-center text-muted-foreground">
+              No transactions yet
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-0 divide-y">
+              {recentTransactions.map(tx => {
+                const category = categories.find(c => c.id === tx.categoryId)
+                const row = (
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white"
+                        style={{ backgroundColor: category?.color || '#999' }}
+                      >
+                        {(() => {
+                          const Icon = getCategoryIcon(category?.icon)
+                          return <Icon className="h-5 w-5" />
+                        })()}
+                      </div>
+                      <div>
+                        <p className="font-medium">{category?.name || 'Unknown'}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(tx.date), "MMM d, yyyy")}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={cn(
+                      "font-medium",
+                      tx.type === 'EXPENSE' ? "text-foreground" : "text-green-600"
+                    )}>
+                      {tx.type === 'EXPENSE' ? '-' : '+'}CA${tx.amount.toLocaleString()}
+                    </span>
+                  </div>
+                )
+
+                if (tx.type === 'EXPENSE') {
+                  return (
+                    <Link
+                      key={tx.id}
+                      href={`/expenses/${tx.id}`}
+                      className="block hover:bg-muted/50 transition-colors"
+                    >
+                      {row}
+                    </Link>
+                  )
+                }
+
+                return (
+                  <div key={tx.id}>
+                    {row}
+                  </div>
+                )
+              })}
             </CardContent>
           </Card>
         )}
