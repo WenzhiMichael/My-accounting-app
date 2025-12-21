@@ -290,7 +290,7 @@ export default function Dashboard() {
                     <div>
                       <p className="font-medium">{category?.name || 'Unknown'}</p>
                       <p className="text-xs text-muted-foreground">
-                        {format(new Date(tx.date), "MMM d, h:mm a")}
+                        {format(new Date(tx.date), "MMM d, yyyy")}
                         {tx.note && ` • ${tx.note}`}
                       </p>
                     </div>
