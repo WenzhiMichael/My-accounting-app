@@ -165,6 +165,71 @@ export default function Dashboard() {
         )}
       </section>
 
+      {/* Recent Transactions */}
+      <section className="space-y-3">
+        <h3 className="text-lg font-semibold">Recent Transactions</h3>
+        {recentTransactions.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="p-6 text-center text-muted-foreground">
+              No transactions yet
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-0 divide-y">
+              {recentTransactions.map(tx => {
+                const category = categories.find(c => c.id === tx.categoryId)
+                const row = (
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white"
+                        style={{ backgroundColor: category?.color || '#999' }}
+                      >
+                        {(() => {
+                          const Icon = getCategoryIcon(category?.icon)
+                          return <Icon className="h-5 w-5" />
+                        })()}
+                      </div>
+                      <div>
+                        <p className="font-medium">{category?.name || 'Unknown'}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(tx.date), "MMM d, yyyy")}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={cn(
+                      "font-medium",
+                      tx.type === 'EXPENSE' ? "text-foreground" : "text-green-600"
+                    )}>
+                      {tx.type === 'EXPENSE' ? '-' : '+'}CA${tx.amount.toLocaleString()}
+                    </span>
+                  </div>
+                )
+
+                if (tx.type === 'EXPENSE') {
+                  return (
+                    <Link
+                      key={tx.id}
+                      href={`/expenses/${tx.id}`}
+                      className="block hover:bg-muted/50 transition-colors"
+                    >
+                      {row}
+                    </Link>
+                  )
+                }
+
+                return (
+                  <div key={tx.id}>
+                    {row}
+                  </div>
+                )
+              })}
+            </CardContent>
+          </Card>
+        )}
+      </section>
+
       {/* Account spend */}
       <section className="space-y-3">
         <div className="flex justify-between items-center">
@@ -266,47 +331,6 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* Recent Transactions */}
-      <section>
-        <h3 className="text-lg font-semibold mb-4">Recent Transactions</h3>
-        <div className="space-y-4">
-          {recentTransactions.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No transactions yet</p>
-          ) : (
-            recentTransactions.map(tx => {
-              const category = categories.find(c => c.id === tx.categoryId)
-              return (
-                <div key={tx.id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-white"
-                      style={{ backgroundColor: category?.color || '#999' }}
-                    >
-                      {(() => {
-                        const Icon = getCategoryIcon(category?.icon)
-                        return <Icon className="h-5 w-5" />
-                      })()}
-                    </div>
-                    <div>
-                      <p className="font-medium">{category?.name || 'Unknown'}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(tx.date), "MMM d, h:mm a")}
-                        {tx.note && ` • ${tx.note}`}
-                      </p>
-                    </div>
-                  </div>
-                  <span className={cn(
-                    "font-medium",
-                    tx.type === 'EXPENSE' ? "text-foreground" : "text-green-600"
-                  )}>
-                    {tx.type === 'EXPENSE' ? '-' : '+'}CA${tx.amount.toLocaleString()}
-                  </span>
-                </div>
-              )
-            })
-          )}
-        </div>
-      </section>
     </main>
   )
 }
