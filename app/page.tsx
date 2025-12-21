@@ -45,6 +45,14 @@ export default function Dashboard() {
 
   const monthBalance = monthIncome - monthExpense
 
+  const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0)
+  const totalIncome = transactions
+    .filter(tx => tx.type === 'INCOME')
+    .reduce((sum, tx) => sum + tx.amount, 0)
+  const totalExpense = transactions
+    .filter(tx => tx.type === 'EXPENSE')
+    .reduce((sum, tx) => sum + tx.amount, 0)
+
   const expenseByCategory = useMemo(() => categories
     .map(cat => {
       const value = monthlyTransactions
@@ -89,6 +97,40 @@ export default function Dashboard() {
           </Link>
         </div>
       </header>
+
+      {/* Overall summary */}
+      <section>
+        <Card className="bg-muted/40 border-none">
+          <CardContent className="p-6 space-y-5">
+            <div className="text-center space-y-1">
+              <p className="text-sm text-muted-foreground">Total Balance</p>
+              <h2
+                className={cn(
+                  "text-4xl font-bold tracking-tight",
+                  totalBalance < 0 ? "text-destructive" : "text-foreground"
+                )}
+              >
+                CA${totalBalance.toLocaleString()}
+              </h2>
+            </div>
+            <div className="flex items-center justify-between gap-4 text-sm">
+              <div className="flex flex-col">
+                <span className="text-muted-foreground">Income</span>
+                <span className="font-semibold text-emerald-600">
+                  +CA${totalIncome.toLocaleString()}
+                </span>
+              </div>
+              <div className="h-8 w-px bg-border" />
+              <div className="flex flex-col items-end">
+                <span className="text-muted-foreground">Expense</span>
+                <span className="font-semibold text-destructive">
+                  -CA${totalExpense.toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
 
       {/* Monthly summary */}
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
