@@ -79,14 +79,6 @@ export default function Dashboard() {
     .filter(tx => tx.type === 'EXPENSE')
     .reduce((sum, tx) => sum + tx.amount, 0)
 
-  const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0)
-  const totalIncome = transactions
-    .filter(tx => tx.type === 'INCOME')
-    .reduce((sum, tx) => sum + tx.amount, 0)
-  const totalExpense = transactions
-    .filter(tx => tx.type === 'EXPENSE')
-    .reduce((sum, tx) => sum + tx.amount, 0)
-
   const expenseByCategory = useMemo(() => categories
     .map(cat => {
       const value = filteredTransactions
@@ -95,25 +87,6 @@ export default function Dashboard() {
       return { name: cat.name, value, color: cat.color }
     })
     .filter(item => item.value > 0), [categories, filteredTransactions])
-
-  const monthlyExpenseTrend = useMemo(() => {
-    const months = Array.from({ length: 6 }, (_value, index) => {
-      const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1)
-      const value = transactions
-        .filter(tx => {
-          const txDate = new Date(tx.date)
-          return tx.type === 'EXPENSE'
-            && txDate.getMonth() === date.getMonth()
-            && txDate.getFullYear() === date.getFullYear()
-        })
-        .reduce((sum, tx) => sum + tx.amount, 0)
-      return {
-        name: format(date, "MMM"),
-        value
-      }
-    })
-    return months
-  }, [transactions, now])
 
   const monthlyExpenseTrend = useMemo(() => {
     const months = Array.from({ length: 6 }, (_value, index) => {
@@ -514,46 +487,6 @@ export default function Dashboard() {
       </section>
 
       {/* Recent Transactions */}
-      <section>
-        <h3 className="text-lg font-semibold mb-4">Recent Transactions</h3>
-        <div className="space-y-4">
-          {recentTransactions.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No transactions yet</p>
-          ) : (
-            recentTransactions.map(tx => {
-              const category = categories.find(c => c.id === tx.categoryId)
-              return (
-                <div key={tx.id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-white"
-                      style={{ backgroundColor: category?.color || '#999' }}
-                    >
-                      {(() => {
-                        const Icon = getCategoryIcon(category?.icon)
-                        return <Icon className="h-5 w-5" />
-                      })()}
-                    </div>
-                    <div>
-                      <p className="font-medium">{category?.name || 'Unknown'}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(tx.date), "MMM d, yyyy")}
-                        {tx.note && ` • ${tx.note}`}
-                      </p>
-                    </div>
-                  </div>
-                  <span className={cn(
-                    "font-medium",
-                    tx.type === 'EXPENSE' ? "text-foreground" : "text-green-600"
-                  )}>
-                    {tx.type === 'EXPENSE' ? '-' : '+'}CA${tx.amount.toLocaleString()}
-                  </span>
-                </div>
-              )
-            })
-          )}
-        </div>
-      </section>
     </main>
   )
 }
