@@ -7,7 +7,7 @@ import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useStore, TransactionType } from "@/lib/store"
-import { cn } from "@/lib/utils"
+import { cn, dateInputToStartOfDayIso, toStartOfDayIso } from "@/lib/utils"
 
 export default function EditTransactionPage() {
     const router = useRouter()
@@ -37,7 +37,7 @@ export default function EditTransactionPage() {
 
     const dateValue = useMemo(() => {
         if (!date) return ""
-        return format(new Date(date), "yyyy-MM-dd'T'HH:mm")
+        return format(new Date(date), "yyyy-MM-dd")
     }, [date])
 
     const handleSave = () => {
@@ -52,7 +52,7 @@ export default function EditTransactionPage() {
             accountId,
             categoryId,
             note,
-            date: date || new Date().toISOString(),
+            date: date || toStartOfDayIso(new Date()),
         })
 
         router.push("/expenses")
@@ -146,11 +146,11 @@ export default function EditTransactionPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Date & time</label>
+                            <label className="text-sm font-medium">Date</label>
                             <input
-                                type="datetime-local"
+                                type="date"
                                 value={dateValue}
-                                onChange={(e) => setDate(e.target.value ? new Date(e.target.value).toISOString() : "")}
+                                onChange={(e) => setDate(dateInputToStartOfDayIso(e.target.value))}
                                 className="w-full h-12 px-4 rounded-xl bg-secondary border-none focus:ring-2 focus:ring-primary outline-none"
                             />
                         </div>
