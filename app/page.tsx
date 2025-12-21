@@ -21,10 +21,16 @@ import {
   CartesianGrid
 } from "recharts"
 import { getCategoryIcon } from "@/lib/category-icons"
+import {
+  type DateRangeKey,
+  getDateRange,
+  isWithinDateRange,
+} from "@/lib/date-range"
 
 export default function Dashboard() {
   const { accounts, transactions, categories } = useStore()
   const [isClient, setIsClient] = useState(false)
+  const [dateRangeKey, setDateRangeKey] = useState<DateRangeKey>("month")
 
   useEffect(() => {
     // Guard rendering until the component has mounted to avoid hydration issues
@@ -41,20 +47,37 @@ export default function Dashboard() {
     .reduce((sum, a) => sum + a.balance, 0)
 
   const now = useMemo(() => new Date(), [])
-  const monthlyTransactions = useMemo(() => transactions.filter(tx => {
-    const d = new Date(tx.date)
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-  }), [transactions, now])
+  const dateRange = useMemo(
+    () => getDateRange(dateRangeKey, now),
+    [dateRangeKey, now],
+  )
+  const rangeLabel = dateRangeKey === "week" ? "week" : "month"
 
-  const monthExpense = monthlyTransactions
+  const filteredTransactions = useMemo(
+    () =>
+      transactions.filter(tx =>
+        isWithinDateRange(new Date(tx.date), dateRange),
+      ),
+    [transactions, dateRange],
+  )
+
+  const periodExpense = filteredTransactions
     .filter(tx => tx.type === 'EXPENSE')
     .reduce((sum, tx) => sum + tx.amount, 0)
 
-  const monthIncome = monthlyTransactions
+  const periodIncome = filteredTransactions
     .filter(tx => tx.type === 'INCOME')
     .reduce((sum, tx) => sum + tx.amount, 0)
 
-  const monthBalance = monthIncome - monthExpense
+  const periodBalance = periodIncome - periodExpense
+
+  const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0)
+  const totalIncome = transactions
+    .filter(tx => tx.type === 'INCOME')
+    .reduce((sum, tx) => sum + tx.amount, 0)
+  const totalExpense = transactions
+    .filter(tx => tx.type === 'EXPENSE')
+    .reduce((sum, tx) => sum + tx.amount, 0)
 
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0)
   const totalIncome = transactions
@@ -66,12 +89,31 @@ export default function Dashboard() {
 
   const expenseByCategory = useMemo(() => categories
     .map(cat => {
-      const value = monthlyTransactions
+      const value = filteredTransactions
         .filter(tx => tx.type === 'EXPENSE' && tx.categoryId === cat.id)
         .reduce((sum, tx) => sum + tx.amount, 0)
       return { name: cat.name, value, color: cat.color }
     })
-    .filter(item => item.value > 0), [categories, monthlyTransactions])
+    .filter(item => item.value > 0), [categories, filteredTransactions])
+
+  const monthlyExpenseTrend = useMemo(() => {
+    const months = Array.from({ length: 6 }, (_value, index) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1)
+      const value = transactions
+        .filter(tx => {
+          const txDate = new Date(tx.date)
+          return tx.type === 'EXPENSE'
+            && txDate.getMonth() === date.getMonth()
+            && txDate.getFullYear() === date.getFullYear()
+        })
+        .reduce((sum, tx) => sum + tx.amount, 0)
+      return {
+        name: format(date, "MMM"),
+        value
+      }
+    })
+    return months
+  }, [transactions, now])
 
   const monthlyExpenseTrend = useMemo(() => {
     const months = Array.from({ length: 6 }, (_value, index) => {
@@ -94,27 +136,53 @@ export default function Dashboard() {
 
   const accountExpense = useMemo(() => accounts
     .map(acc => {
-      const value = monthlyTransactions
+      const value = filteredTransactions
         .filter(tx => tx.type === 'EXPENSE' && tx.accountId === acc.id)
         .reduce((sum, tx) => sum + tx.amount, 0)
       return { name: acc.name, value, color: acc.color }
     })
-    .filter(item => item.value > 0), [accounts, monthlyTransactions])
+    .filter(item => item.value > 0), [accounts, filteredTransactions])
 
-  const recentTransactions = useMemo(() => transactions
+  const recentTransactions = useMemo(() => filteredTransactions
     .slice()
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5), [transactions])
+    .slice(0, 5), [filteredTransactions])
 
   if (!isClient) return null
 
   return (
     <main className="min-h-screen bg-background p-4 space-y-6">
       {/* Header */}
-      <header className="flex justify-between items-center pt-8 pb-4">
+      <header className="flex flex-col gap-4 pt-8 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
-          <p className="text-muted-foreground">This month in CAD</p>
+          <p className="text-muted-foreground">This {rangeLabel} in CAD</p>
+        </div>
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted p-1">
+          <button
+            type="button"
+            onClick={() => setDateRangeKey("week")}
+            className={cn(
+              "rounded-full px-4 py-1 text-sm font-medium transition",
+              dateRangeKey === "week"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Week
+          </button>
+          <button
+            type="button"
+            onClick={() => setDateRangeKey("month")}
+            className={cn(
+              "rounded-full px-4 py-1 text-sm font-medium transition",
+              dateRangeKey === "month"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Month
+          </button>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/expenses/new">
@@ -166,17 +234,17 @@ export default function Dashboard() {
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="bg-destructive text-destructive-foreground border-none">
           <CardContent className="p-6">
-            <p className="text-sm opacity-80">This month spent</p>
+            <p className="text-sm opacity-80">This {rangeLabel} spent</p>
             <h2 className="text-3xl font-bold mt-1">
-              CA${monthExpense.toLocaleString()}
+              CA${periodExpense.toLocaleString()}
             </h2>
           </CardContent>
         </Card>
         <Card className="bg-emerald-500 text-white border-none">
           <CardContent className="p-6">
-            <p className="text-sm opacity-80">This month income</p>
+            <p className="text-sm opacity-80">This {rangeLabel} income</p>
             <h2 className="text-3xl font-bold mt-1">
-              CA${monthIncome.toLocaleString()}
+              CA${periodIncome.toLocaleString()}
             </h2>
           </CardContent>
         </Card>
@@ -184,7 +252,7 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <p className="text-sm opacity-80">Balance</p>
             <h2 className="text-3xl font-bold mt-1">
-              CA${monthBalance.toLocaleString()}
+              CA${periodBalance.toLocaleString()}
             </h2>
           </CardContent>
         </Card>
@@ -347,13 +415,13 @@ export default function Dashboard() {
       {/* Account spend */}
       <section className="space-y-3">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Accounts this month</h3>
+          <h3 className="text-lg font-semibold">Accounts this {rangeLabel}</h3>
           <p className="text-sm text-muted-foreground">Net worth: CA${netWorth.toLocaleString()}</p>
         </div>
         {accountExpense.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="p-6 text-center text-muted-foreground">
-              No spending tracked this month.
+              No spending tracked this {rangeLabel}.
             </CardContent>
           </Card>
         ) : (
@@ -368,7 +436,7 @@ export default function Dashboard() {
                     />
                     <div>
                       <p className="font-semibold">{acc.name}</p>
-                      <p className="text-xs text-muted-foreground">Spend this month</p>
+                      <p className="text-xs text-muted-foreground">Spend this {rangeLabel}</p>
                     </div>
                   </div>
                   <p className="text-lg font-semibold text-destructive">-CA${acc.value.toLocaleString()}</p>
@@ -445,6 +513,47 @@ export default function Dashboard() {
         </div>
       </section>
 
+      {/* Recent Transactions */}
+      <section>
+        <h3 className="text-lg font-semibold mb-4">Recent Transactions</h3>
+        <div className="space-y-4">
+          {recentTransactions.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No transactions yet</p>
+          ) : (
+            recentTransactions.map(tx => {
+              const category = categories.find(c => c.id === tx.categoryId)
+              return (
+                <div key={tx.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white"
+                      style={{ backgroundColor: category?.color || '#999' }}
+                    >
+                      {(() => {
+                        const Icon = getCategoryIcon(category?.icon)
+                        return <Icon className="h-5 w-5" />
+                      })()}
+                    </div>
+                    <div>
+                      <p className="font-medium">{category?.name || 'Unknown'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(tx.date), "MMM d, yyyy")}
+                        {tx.note && ` • ${tx.note}`}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={cn(
+                    "font-medium",
+                    tx.type === 'EXPENSE' ? "text-foreground" : "text-green-600"
+                  )}>
+                    {tx.type === 'EXPENSE' ? '-' : '+'}CA${tx.amount.toLocaleString()}
+                  </span>
+                </div>
+              )
+            })
+          )}
+        </div>
+      </section>
     </main>
   )
 }

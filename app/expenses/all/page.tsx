@@ -113,7 +113,7 @@ export default function AllExpensesPage() {
                                         <div className="space-y-1">
                                             <p className="font-medium">{category?.name || 'Uncategorized'}</p>
                                             <p className="text-xs text-muted-foreground">
-                                                {format(new Date(tx.date), "MMM d, h:mm a")} · {accountMap[tx.accountId] || 'Unknown account'}
+                                                {format(new Date(tx.date), "MMM d, yyyy")} · {accountMap[tx.accountId] || 'Unknown account'}
                                             </p>
                                             {tx.note && (
                                                 <p className="text-xs text-muted-foreground truncate max-w-[220px]">
