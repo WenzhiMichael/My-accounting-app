@@ -8,7 +8,18 @@ import { format } from "date-fns"
 import { Wallet, CreditCard as CreditCardIcon } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts"
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid
+} from "recharts"
 import { getCategoryIcon } from "@/lib/category-icons"
 
 export default function Dashboard() {
@@ -61,6 +72,25 @@ export default function Dashboard() {
       return { name: cat.name, value, color: cat.color }
     })
     .filter(item => item.value > 0), [categories, monthlyTransactions])
+
+  const monthlyExpenseTrend = useMemo(() => {
+    const months = Array.from({ length: 6 }, (_value, index) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1)
+      const value = transactions
+        .filter(tx => {
+          const txDate = new Date(tx.date)
+          return tx.type === 'EXPENSE'
+            && txDate.getMonth() === date.getMonth()
+            && txDate.getFullYear() === date.getFullYear()
+        })
+        .reduce((sum, tx) => sum + tx.amount, 0)
+      return {
+        name: format(date, "MMM"),
+        value
+      }
+    })
+    return months
+  }, [transactions, now])
 
   const accountExpense = useMemo(() => accounts
     .map(acc => {
@@ -158,6 +188,48 @@ export default function Dashboard() {
             </h2>
           </CardContent>
         </Card>
+      </section>
+
+      {/* Monthly trend */}
+      <section className="space-y-3">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">Spending trend</h3>
+          <span className="text-sm text-muted-foreground">Last 6 months</span>
+        </div>
+        {monthlyExpenseTrend.every(item => item.value === 0) ? (
+          <Card className="border-dashed">
+            <CardContent className="p-6 text-center text-muted-foreground">
+              Add expenses to see your trend.
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-0 h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyExpenseTrend} margin={{ top: 16, right: 24, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `CA$${value}`}
+                  />
+                  <Tooltip
+                    formatter={(value: number) => [`CA$${value.toLocaleString()}`, "Expenses"]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
       </section>
 
       <div className="grid grid-cols-2 gap-2">
