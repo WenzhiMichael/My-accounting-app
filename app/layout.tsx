@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { Inter, Nunito } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { AppShell } from "@/components/layout/app-shell";
+
+const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito" });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -15,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">
+      <body className={`${nunito.variable} ${inter.variable} antialiased`}>
         <AppShell>
           <div className="pb-20">
             {children}

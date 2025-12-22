@@ -8,13 +8,13 @@ const buttonVariants = cva(
     {
         variants: {
             variant: {
-                default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm",
+                default: "neumorphic-flat text-primary font-bold hover:scale-[1.02] active:scale-[0.98] active:neumorphic-pressed transition-all duration-200",
                 destructive:
-                    "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",
+                    "neumorphic-flat text-destructive hover:bg-destructive/10 active:neumorphic-pressed",
                 outline:
-                    "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                    "neumorphic-flat border-2 border-transparent bg-transparent hover:text-primary active:neumorphic-pressed",
                 secondary:
-                    "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                    "neumorphic-flat text-secondary-foreground hover:bg-secondary/50 active:neumorphic-pressed",
                 ghost: "hover:bg-accent hover:text-accent-foreground",
                 link: "text-primary underline-offset-4 hover:underline",
             },

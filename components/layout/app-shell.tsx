@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useStore } from "@/lib/store"
+import { useTranslation } from "@/lib/i18n"
 
 interface Props {
     children: React.ReactNode
@@ -59,6 +60,7 @@ function ThemeController({ children }: Props) {
 
 function AppLockGate({ children }: Props) {
     const { preferences, setAppLockEnabled } = useStore()
+    const { t } = useTranslation()
     const [locked, setLocked] = useState(preferences.appLockEnabled)
     const [passcodeInput, setPasscodeInput] = useState("")
     const [error, setError] = useState<string | null>(null)
@@ -79,7 +81,7 @@ function AppLockGate({ children }: Props) {
     const tryBiometric = async () => {
         setError(null)
         if (!('credentials' in navigator) || typeof PublicKeyCredential === 'undefined') {
-            setError("Biometric auth not available on this device.")
+            setError(t('biometric_not_available'))
             return
         }
 
@@ -95,20 +97,20 @@ function AppLockGate({ children }: Props) {
             })
             setLocked(false)
         } catch {
-            setError("Authentication failed or was cancelled.")
+            setError(t('auth_failed'))
         }
     }
 
     const tryPasscode = () => {
         setError(null)
         if (!passcode) {
-            setError("No passcode set. Set one in Settings.")
+            setError(t('no_passcode_set'))
             return
         }
         if (passcodeInput === passcode) {
             setLocked(false)
         } else {
-            setError("Incorrect passcode.")
+            setError(t('incorrect_passcode'))
         }
     }
 
@@ -117,29 +119,29 @@ function AppLockGate({ children }: Props) {
             {children}
             <div className="fixed inset-0 z-50 bg-background/90 backdrop-blur-md flex items-center justify-center p-6">
                 <div className="w-full max-w-md space-y-4 bg-card border border-border rounded-3xl p-6 shadow-lg">
-                    <h2 className="text-xl font-bold text-center">Unlock to continue</h2>
+                    <h2 className="text-xl font-bold text-center">{t('unlock_to_continue')}</h2>
                     <p className="text-sm text-muted-foreground text-center">
-                        App Lock is enabled. Use device biometrics or your passcode to unlock.
+                        {t('app_lock_enabled_message')}
                     </p>
 
                     <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); tryPasscode() }}>
                         <div className="flex gap-3 justify-center">
                             {hasWebAuthn && (
-                                <Button type="button" onClick={tryBiometric}>Unlock with device</Button>
+                                <Button type="button" onClick={tryBiometric}>{t('unlock_with_device')}</Button>
                             )}
                             {passcode && (
-                                <Button type="submit" variant="outline">Use passcode</Button>
+                                <Button type="submit" variant="outline">{t('use_passcode')}</Button>
                             )}
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Passcode (if set)</label>
+                            <label className="text-sm font-medium">{t('passcode_if_set')}</label>
                             <input
                                 type="password"
                                 value={passcodeInput}
                                 onChange={(e) => setPasscodeInput(e.target.value)}
                                 className="w-full h-12 px-4 rounded-xl bg-secondary border border-border focus:ring-2 focus:ring-primary outline-none"
-                                placeholder="Enter passcode"
+                                placeholder={t('enter_passcode')}
                             />
                         </div>
 
@@ -150,7 +152,7 @@ function AppLockGate({ children }: Props) {
                                 onClick={() => setAppLockEnabled(false)}
                                 className="text-sm"
                             >
-                                Disable App Lock for now
+                                {t('disable_app_lock')}
                             </Button>
                         </div>
                     </form>
@@ -159,7 +161,7 @@ function AppLockGate({ children }: Props) {
 
                     {!passcode && (
                         <p className="text-xs text-muted-foreground text-center">
-                            Tip: set a passcode in Settings as a fallback if biometrics are unavailable.
+                            {t('app_lock_tip')}
                         </p>
                     )}
                 </div>

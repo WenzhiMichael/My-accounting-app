@@ -8,12 +8,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { getCategoryIcon } from "@/lib/category-icons"
+import { useTranslation } from "@/lib/i18n"
 
 const ALL_ACCOUNTS = "all"
 type Range = "all" | "week" | "month" | "halfyear"
 
 export default function TransactionsPage() {
     const { transactions, accounts, categories } = useStore()
+    const { t } = useTranslation()
     const [accountFilter, setAccountFilter] = useState<string>(ALL_ACCOUNTS)
     const [range, setRange] = useState<Range>("all")
 
@@ -52,12 +54,21 @@ export default function TransactionsPage() {
     const totalExpense = filtered.filter(tx => tx.type === 'EXPENSE').reduce((sum, tx) => sum + tx.amount, 0)
     const totalBalance = totalIncome - totalExpense
 
+    const labelForRange = (value: Range) => {
+        switch (value) {
+            case "week": return t('range_last_7_days')
+            case "month": return t('range_last_30_days')
+            case "halfyear": return t('range_last_6_months')
+            default: return t('range_overall')
+        }
+    }
+
     return (
         <main className="min-h-screen bg-background p-4 pb-24 space-y-4">
             <header className="flex items-center justify-between pt-8 pb-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
-                    <p className="text-sm text-muted-foreground">Filtered activity across your accounts (CAD)</p>
+                    <h1 className="text-3xl font-bold tracking-tight">{t('transactions')}</h1>
+                    <p className="text-sm text-muted-foreground">{t('transactions_subtitle')}</p>
                 </div>
                 <Link href="/expenses/new">
                     <Button size="icon" className="rounded-full shadow-lg">+</Button>
@@ -67,7 +78,7 @@ export default function TransactionsPage() {
             <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Card className="bg-secondary border-none">
                     <CardContent className="p-4">
-                        <p className="text-sm text-muted-foreground">Total balance</p>
+                        <p className="text-sm text-muted-foreground">{t('total_balance')}</p>
                         <p className={cn("text-2xl font-bold mt-1", totalBalance < 0 ? "text-destructive" : "text-foreground")}>
                             CA${totalBalance.toLocaleString()}
                         </p>
@@ -75,13 +86,13 @@ export default function TransactionsPage() {
                 </Card>
                 <Card className="bg-primary text-primary-foreground border-none">
                     <CardContent className="p-4">
-                        <p className="text-sm opacity-80">Income ({labelForRange(range)})</p>
+                        <p className="text-sm opacity-80">{t('income_range', { range: labelForRange(range) })}</p>
                         <p className="text-2xl font-bold mt-1">CA${totalIncome.toLocaleString()}</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-destructive text-destructive-foreground border-none">
                     <CardContent className="p-4">
-                        <p className="text-sm opacity-80">Expense ({labelForRange(range)})</p>
+                        <p className="text-sm opacity-80">{t('expense_range', { range: labelForRange(range) })}</p>
                         <p className="text-2xl font-bold mt-1">CA${totalExpense.toLocaleString()}</p>
                     </CardContent>
                 </Card>
@@ -89,10 +100,10 @@ export default function TransactionsPage() {
 
             <div className="grid grid-cols-2 gap-2">
                 <Link href="/expenses/all">
-                    <Button variant="outline" className="w-full rounded-xl">All Expenses</Button>
+                    <Button variant="outline" className="w-full rounded-xl">{t('all_expenses')}</Button>
                 </Link>
                 <Link href="/income">
-                    <Button variant="outline" className="w-full rounded-xl">All Income</Button>
+                    <Button variant="outline" className="w-full rounded-xl">{t('all_income')}</Button>
                 </Link>
             </div>
 
@@ -117,14 +128,14 @@ export default function TransactionsPage() {
                     onChange={(e) => setAccountFilter(e.target.value)}
                     className="h-11 rounded-full bg-secondary px-4 text-sm font-medium outline-none border border-border"
                 >
-                    <option value={ALL_ACCOUNTS}>All accounts</option>
+                    <option value={ALL_ACCOUNTS}>{t('all_accounts')}</option>
                     {accounts.map(acc => (
                         <option key={acc.id} value={acc.id}>{acc.name}</option>
                     ))}
                 </select>
 
                 <Link href="/settings">
-                    <Button variant="outline" size="sm">Settings</Button>
+                    <Button variant="outline" size="sm">{t('settings')}</Button>
                 </Link>
             </div>
 
@@ -132,7 +143,7 @@ export default function TransactionsPage() {
                 {filtered.length === 0 ? (
                     <Card className="border-dashed">
                         <CardContent className="p-6 text-center text-muted-foreground">
-                            No transactions yet. Start by adding one.
+                            {t('no_transactions_cta')}
                         </CardContent>
                     </Card>
                 ) : (
@@ -153,9 +164,9 @@ export default function TransactionsPage() {
                                                 })()}
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="font-medium">{category?.name || 'Uncategorized'}</p>
+                                                <p className="font-medium">{category?.name || t('uncategorized')}</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {format(new Date(tx.date), "MMM d, yyyy")} · {accountMap[tx.accountId] || 'Unknown account'}
+                                                    {format(new Date(tx.date), "MMM d, yyyy")} · {accountMap[tx.accountId] || t('unknown_account')}
                                                 </p>
                                                 {tx.note && (
                                                     <p className="text-xs text-muted-foreground truncate max-w-[220px]">
@@ -179,13 +190,4 @@ export default function TransactionsPage() {
             </section>
         </main>
     )
-}
-
-function labelForRange(range: Range) {
-    switch (range) {
-        case "week": return "Last 7 days"
-        case "month": return "Last 30 days"
-        case "halfyear": return "Last 6 months"
-        default: return "Overall"
-    }
 }

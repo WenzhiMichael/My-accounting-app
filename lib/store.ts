@@ -1,4 +1,4 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -128,15 +128,15 @@ const DEFAULT_CATEGORIES: Category[] = [
     { id: '38', name: '宠物费用', icon: 'paw-print', color: '#f59e0b', group: '其他', type: 'EXPENSE' },
     { id: '39', name: '意外丢失', icon: 'alert-circle', color: '#f87171', group: '其他', type: 'EXPENSE' },
     { id: '40', name: '手续费', icon: 'receipt', color: '#6b7280', group: '其他', type: 'EXPENSE' },
-    { id: '41', name: '烂账/遗忘', icon: 'help-circle', color: '#9ca3af', group: '其他', type: 'EXPENSE' },
+    { id: '41', name: '坏账/遗忘', icon: 'help-circle', color: '#9ca3af', group: '其他', type: 'EXPENSE' },
 
-    // 收入类
+    // 收入
     { id: '42', name: '工资收入', icon: 'badge-dollar-sign', color: '#22c55e', group: '收入', type: 'INCOME' },
     { id: '43', name: '奖金补贴', icon: 'medal', color: '#84cc16', group: '收入', type: 'INCOME' },
     { id: '44', name: '兼职副业', icon: 'briefcase', color: '#0ea5e9', group: '收入', type: 'INCOME' },
     { id: '45', name: '理财收益', icon: 'piggy-bank', color: '#10b981', group: '收入', type: 'INCOME' },
     { id: '46', name: '礼金收入', icon: 'party-popper', color: '#ec4899', group: '收入', type: 'INCOME' },
-    { id: '47', name: '退款/报销', icon: 'rotate-ccw', color: '#f97316', group: '收入', type: 'INCOME' },
+    { id: '47', name: '退款报销', icon: 'rotate-ccw', color: '#f97316', group: '收入', type: 'INCOME' },
     { id: '48', name: '借入', icon: 'wallet', color: '#06b6d4', group: '收入', type: 'INCOME' },
 ]
 
@@ -312,6 +312,26 @@ export const useStore = create<AppState>()(
         }),
         {
             name: 'expense-tracker-storage',
+            version: 1,
+            migrate: (persistedState) => {
+                const state = persistedState as AppState
+                if (!state?.categories) return state
+
+                const defaultsById = new Map(DEFAULT_CATEGORIES.map((cat) => [cat.id, cat]))
+                const categories = state.categories.map((cat) => {
+                    const defaults = defaultsById.get(cat.id)
+                    if (!defaults) return cat
+                    return {
+                        ...cat,
+                        name: defaults.name,
+                        group: defaults.group,
+                        type: defaults.type ?? cat.type,
+                    }
+                })
+
+                return { ...state, categories }
+            },
         }
     )
 )
+
