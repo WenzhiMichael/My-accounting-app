@@ -9,12 +9,14 @@ import { Button } from "@/components/ui/button"
 import { cn, dateInputToStartOfDayIso, toStartOfDayIso } from "@/lib/utils"
 import { useStore, TransactionType } from "@/lib/store"
 import { categoryIconMap, defaultCategoryIcon, getCategoryIcon } from "@/lib/category-icons"
+import { useTranslation } from "@/lib/i18n"
 
 type RecurringType = 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY'
 
 export default function AddExpensePage() {
     const router = useRouter()
     const { accounts, categories, transactions, addTransaction, preferences, setLastAccountId } = useStore()
+    const { t } = useTranslation()
 
     const [amount, setAmount] = useState("0")
     const [note, setNote] = useState("")
@@ -114,17 +116,17 @@ export default function AddExpensePage() {
     const handleSubmit = () => {
         const finalAmount = Number.parseFloat(amount)
         if (Number.isNaN(finalAmount) || finalAmount <= 0) {
-            triggerToast("Missing amount")
+            triggerToast(t('missing_amount'))
             return
         }
         if (!selectedCategoryId) {
-            triggerToast("Choose a category")
+            triggerToast(t('choose_category'))
             setShakeCategory(true)
             setTimeout(() => setShakeCategory(false), 500)
             return
         }
         if (!selectedAccountId) {
-            triggerToast("Select an account")
+            triggerToast(t('select_account'))
             return
         }
 
@@ -146,9 +148,9 @@ export default function AddExpensePage() {
     if (accounts.length === 0) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center space-y-4">
-                <p>You need an account to track expenses.</p>
+                <p>{t('add_first_account')}</p>
                 <Link href="/accounts/new">
-                    <Button>Create Account</Button>
+                    <Button>{t('add_account')}</Button>
                 </Link>
             </div>
         )
@@ -179,14 +181,14 @@ export default function AddExpensePage() {
                         className={cn("relative z-10 px-4 py-1 rounded-full text-sm font-medium transition-all",
                             type === 'EXPENSE' ? "text-foreground" : "text-muted-foreground")}
                     >
-                        Expense
+                        {t('expense')}
                     </button>
                     <button
                         onClick={() => { setType('INCOME'); setSelectedCategoryId(firstIncomeId) }}
                         className={cn("relative z-10 px-4 py-1 rounded-full text-sm font-medium transition-all",
                             type === 'INCOME' ? "text-foreground" : "text-muted-foreground")}
                     >
-                        Income
+                        {t('income')}
                     </button>
                 </div>
                 <div className="w-10" />
@@ -244,111 +246,111 @@ export default function AddExpensePage() {
                                 <SelectedCategoryIcon className="h-4 w-4 text-white" />
                             </div>
                         </div>
-                        <span className="font-medium">{selectedCategory?.name || "Choose category"}</span>
                     </div>
-                    <div className="text-4xl font-bold tracking-tight">
-                        CA${amount}
-                    </div>
+                    <span className="font-medium">{selectedCategory?.name || t('choose_category')}</span>
                 </div>
+                <div className="text-4xl font-bold tracking-tight">
+                    CA${amount}
+                </div>
+            </div>
 
-                {/* Controls */}
-                <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide items-center">
-                    <button
-                        onClick={() => setShowDatePicker(true)}
-                        className="flex items-center gap-2 bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm font-medium shadow-sm whitespace-nowrap"
-                    >
-                        <Calendar className="h-4 w-4" />
-        <span>{dateLabel}</span>
-                    </button>
+            {/* Controls */}
+            <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide items-center">
+                <button
+                    onClick={() => setShowDatePicker(true)}
+                    className="flex items-center gap-2 bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm font-medium shadow-sm whitespace-nowrap"
+                >
+                    <Calendar className="h-4 w-4" />
+                    <span>{dateLabel}</span>
+                </button>
+                <select
+                    value={selectedAccountId}
+                    onChange={(e) => {
+                        setSelectedAccountId(e.target.value)
+                        setLastAccountId(e.target.value)
+                    }}
+                    className="bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm font-medium shadow-sm outline-none appearance-none"
+                >
+                    {accounts.map(acc => (
+                        <option key={acc.id} value={acc.id}>{acc.name}</option>
+                    ))}
+                </select>
+                <input
+                    type="text"
+                    placeholder={t('note')}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    className="bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm shadow-sm outline-none min-w-[120px]"
+                />
+                <div className="flex items-center gap-2 bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm shadow-sm">
+                    <Repeat className="h-4 w-4 text-muted-foreground" />
                     <select
-                        value={selectedAccountId}
-                        onChange={(e) => {
-                            setSelectedAccountId(e.target.value)
-                            setLastAccountId(e.target.value)
-                        }}
-                        className="bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm font-medium shadow-sm outline-none appearance-none"
+                        value={recurringType}
+                        onChange={(e) => setRecurringType(e.target.value as RecurringType)}
+                        className="bg-transparent outline-none"
                     >
-                        {accounts.map(acc => (
-                            <option key={acc.id} value={acc.id}>{acc.name}</option>
-                        ))}
+                        <option value="NONE">One-time</option>
+                        <option value="DAILY">Daily</option>
+                        <option value="WEEKLY">Weekly</option>
+                        <option value="MONTHLY">Monthly</option>
                     </select>
-                    <input
-                        type="text"
-                        placeholder="Add note..."
-                        value={note}
-                        onChange={(e) => setNote(e.target.value)}
-                        className="bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm shadow-sm outline-none min-w-[120px]"
-                    />
-                    <div className="flex items-center gap-2 bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm shadow-sm">
-                        <Repeat className="h-4 w-4 text-muted-foreground" />
-                        <select
-                            value={recurringType}
-                            onChange={(e) => setRecurringType(e.target.value as RecurringType)}
-                            className="bg-transparent outline-none"
+                    {recurringType !== 'NONE' && (
+                        <input
+                            type="number"
+                            min={1}
+                            value={recurringInterval}
+                            onChange={(e) => setRecurringInterval(Math.max(1, Number.parseInt(e.target.value, 10) || 1))}
+                            className="w-14 bg-transparent outline-none text-right"
+                        />
+                    )}
+                </div>
+            </div>
+
+            {suggestions.length > 0 && (
+                <div className="flex gap-2 mb-3 overflow-x-auto pb-2 scrollbar-hide">
+                    {suggestions.map((tx) => (
+                        <button
+                            key={tx.id}
+                            onClick={() => {
+                                setNote(tx.note || "")
+                                if (amount === "0") setAmount(tx.amount.toString())
+                                if (!selectedCategoryId) setSelectedCategoryId(tx.categoryId)
+                            }}
+                            className="flex items-center gap-2 bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm shadow-sm whitespace-nowrap"
                         >
-                            <option value="NONE">One-time</option>
-                            <option value="DAILY">Daily</option>
-                            <option value="WEEKLY">Weekly</option>
-                            <option value="MONTHLY">Monthly</option>
-                        </select>
-                        {recurringType !== 'NONE' && (
-                            <input
-                                type="number"
-                                min={1}
-                                value={recurringInterval}
-                                onChange={(e) => setRecurringInterval(Math.max(1, Number.parseInt(e.target.value, 10) || 1))}
-                                className="w-14 bg-transparent outline-none text-right"
-                            />
-                        )}
-                    </div>
+                            <span className="font-semibold">{tx.note}</span>
+                            <span className="text-muted-foreground">CA${tx.amount.toLocaleString()}</span>
+                        </button>
+                    ))}
                 </div>
+            )}
 
-                {suggestions.length > 0 && (
-                    <div className="flex gap-2 mb-3 overflow-x-auto pb-2 scrollbar-hide">
-                        {suggestions.map((tx) => (
-                            <button
-                                key={tx.id}
-                                onClick={() => {
-                                    setNote(tx.note || "")
-                                    if (amount === "0") setAmount(tx.amount.toString())
-                                    if (!selectedCategoryId) setSelectedCategoryId(tx.categoryId)
-                                }}
-                                className="flex items-center gap-2 bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm shadow-sm whitespace-nowrap"
-                            >
-                                <span className="font-semibold">{tx.note}</span>
-                                <span className="text-muted-foreground">CA${tx.amount.toLocaleString()}</span>
-                            </button>
-                        ))}
-                    </div>
-                )}
-
-                {/* Keypad */}
-                <div className="grid grid-cols-4 gap-3">
-                    {['7', '8', '9'].map(k => (
-                        <Key key={k} val={k} onClick={handleDigit} />
-                    ))}
-                    <div />
-                    {['4', '5', '6'].map(k => (
-                        <Key key={k} val={k} onClick={handleDigit} />
-                    ))}
-                    <div />
-                    {['1', '2', '3'].map(k => (
-                        <Key key={k} val={k} onClick={handleDigit} />
-                    ))}
-                    <div />
-                    <Key val="." onClick={handleDigit} />
-                    <Key val="0" onClick={handleDigit} />
-                    <button onClick={handleBackspace} className="flex items-center justify-center h-14 rounded-2xl bg-white text-foreground border border-border dark:bg-zinc-800 dark:text-white shadow-sm active:scale-95 transition-transform">
-                        <Delete className="h-6 w-6" />
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={Number.parseFloat(amount) <= 0 || !selectedCategoryId || !selectedAccountId}
-                        className="flex items-center justify-center h-14 rounded-2xl bg-primary text-primary-foreground shadow-lg active:scale-95 transition-transform font-bold text-lg disabled:opacity-50"
-                    >
-                        OK
-                    </button>
-                </div>
+            {/* Keypad */}
+            <div className="grid grid-cols-4 gap-3">
+                {['7', '8', '9'].map(k => (
+                    <Key key={k} val={k} onClick={handleDigit} />
+                ))}
+                <div />
+                {['4', '5', '6'].map(k => (
+                    <Key key={k} val={k} onClick={handleDigit} />
+                ))}
+                <div />
+                {['1', '2', '3'].map(k => (
+                    <Key key={k} val={k} onClick={handleDigit} />
+                ))}
+                <div />
+                <Key val="." onClick={handleDigit} />
+                <Key val="0" onClick={handleDigit} />
+                <button onClick={handleBackspace} className="flex items-center justify-center h-14 rounded-2xl bg-white text-foreground border border-border dark:bg-zinc-800 dark:text-white shadow-sm active:scale-95 transition-transform">
+                    <Delete className="h-6 w-6" />
+                </button>
+                <button
+                    onClick={handleSubmit}
+                    disabled={Number.parseFloat(amount) <= 0 || !selectedCategoryId || !selectedAccountId}
+                    className="flex items-center justify-center h-14 rounded-2xl bg-primary text-primary-foreground shadow-lg active:scale-95 transition-transform font-bold text-lg disabled:opacity-50"
+                >
+                    {t('ok')}
+                </button>
             </div>
 
             {showDatePicker && (

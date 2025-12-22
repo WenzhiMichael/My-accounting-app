@@ -26,9 +26,11 @@ import {
   getDateRange,
   isWithinDateRange,
 } from "@/lib/date-range"
+import { useTranslation } from "@/lib/i18n"
 
 export default function Dashboard() {
   const { accounts, transactions, categories } = useStore()
+  const { t } = useTranslation()
   const [isClient, setIsClient] = useState(false)
   const [dateRangeKey, setDateRangeKey] = useState<DateRangeKey>("month")
 
@@ -51,7 +53,7 @@ export default function Dashboard() {
     () => getDateRange(dateRangeKey, now),
     [dateRangeKey, now],
   )
-  const rangeLabel = dateRangeKey === "week" ? "week" : "month"
+  const rangeLabel = dateRangeKey === "week" ? t('week').toLowerCase() : t('month').toLowerCase()
 
   const filteredTransactions = useMemo(
     () =>
@@ -128,7 +130,7 @@ export default function Dashboard() {
       {/* Header */}
       <header className="flex flex-col gap-4 pt-8 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('overview')}</h1>
           <p className="text-muted-foreground">This {rangeLabel} in CAD</p>
         </div>
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted p-1">
@@ -142,7 +144,7 @@ export default function Dashboard() {
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            Week
+            {t('week')}
           </button>
           <button
             type="button"
@@ -159,7 +161,7 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-2">
           <Link href="/expenses/new">
-            <Button size="sm" className="rounded-full">Add</Button>
+            <Button size="sm" className="rounded-full">{t('add')}</Button>
           </Link>
           <Link href="/accounts">
             <Button variant="outline" size="icon" className="rounded-full">
@@ -174,7 +176,7 @@ export default function Dashboard() {
         <Card className="bg-muted/40 border-none">
           <CardContent className="p-6 space-y-5">
             <div className="text-center space-y-1">
-              <p className="text-sm text-muted-foreground">Total Balance</p>
+              <p className="text-sm text-muted-foreground">{t('total_balance')}</p>
               <h2
                 className={cn(
                   "text-4xl font-bold tracking-tight",
@@ -186,14 +188,14 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center justify-between gap-4 text-sm">
               <div className="flex flex-col">
-                <span className="text-muted-foreground">Income</span>
+                <span className="text-muted-foreground">{t('income')}</span>
                 <span className="font-semibold text-emerald-600">
                   +CA${totalIncome.toLocaleString()}
                 </span>
               </div>
               <div className="h-8 w-px bg-border" />
               <div className="flex flex-col items-end">
-                <span className="text-muted-foreground">Expense</span>
+                <span className="text-muted-foreground">{t('expense')}</span>
                 <span className="font-semibold text-destructive">
                   -CA${totalExpense.toLocaleString()}
                 </span>
@@ -207,7 +209,7 @@ export default function Dashboard() {
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="bg-destructive text-destructive-foreground border-none">
           <CardContent className="p-6">
-            <p className="text-sm opacity-80">This {rangeLabel} spent</p>
+            <p className="text-sm opacity-80">{t('spend_this_period', { period: rangeLabel })}</p>
             <h2 className="text-3xl font-bold mt-1">
               CA${periodExpense.toLocaleString()}
             </h2>
@@ -215,7 +217,7 @@ export default function Dashboard() {
         </Card>
         <Card className="bg-emerald-500 text-white border-none">
           <CardContent className="p-6">
-            <p className="text-sm opacity-80">This {rangeLabel} income</p>
+            <p className="text-sm opacity-80">Title {rangeLabel} {t('income').toLowerCase()}</p>
             <h2 className="text-3xl font-bold mt-1">
               CA${periodIncome.toLocaleString()}
             </h2>
@@ -223,7 +225,7 @@ export default function Dashboard() {
         </Card>
         <Card className="bg-primary text-primary-foreground border-none">
           <CardContent className="p-6">
-            <p className="text-sm opacity-80">Balance</p>
+            <p className="text-sm opacity-80">{t('balance')}</p>
             <h2 className="text-3xl font-bold mt-1">
               CA${periodBalance.toLocaleString()}
             </h2>
@@ -234,13 +236,13 @@ export default function Dashboard() {
       {/* Monthly trend */}
       <section className="space-y-3">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Spending trend</h3>
-          <span className="text-sm text-muted-foreground">Last 6 months</span>
+          <h3 className="text-lg font-semibold">{t('spending_trend')}</h3>
+          <span className="text-sm text-muted-foreground">{t('last_6_months')}</span>
         </div>
         {monthlyExpenseTrend.every(item => item.value === 0) ? (
           <Card className="border-dashed">
             <CardContent className="p-6 text-center text-muted-foreground">
-              Add expenses to see your trend.
+              {t('add_expenses_trend')}
             </CardContent>
           </Card>
         ) : (
@@ -256,7 +258,7 @@ export default function Dashboard() {
                     tickFormatter={(value) => `CA$${value}`}
                   />
                   <Tooltip
-                    formatter={(value: number) => [`CA$${value.toLocaleString()}`, "Expenses"]}
+                    formatter={(value: number) => [`CA$${value.toLocaleString()}`, t('expense')]}
                   />
                   <Line
                     type="monotone"
@@ -275,23 +277,23 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-2 gap-2">
         <Link href="/expenses/all">
-          <Button variant="outline" className="w-full rounded-xl">All Expenses</Button>
+          <Button variant="outline" className="w-full rounded-xl">{t('all_expenses')}</Button>
         </Link>
         <Link href="/income">
-          <Button variant="outline" className="w-full rounded-xl">All Income</Button>
+          <Button variant="outline" className="w-full rounded-xl">{t('all_income')}</Button>
         </Link>
       </div>
 
       {/* Category breakdown */}
       <section className="space-y-3">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Category breakdown</h3>
-          <span className="text-sm text-muted-foreground">Expenses only</span>
+          <h3 className="text-lg font-semibold">{t('category_breakdown')}</h3>
+          <span className="text-sm text-muted-foreground">{t('expenses_only')}</span>
         </div>
         {expenseByCategory.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="p-6 text-center text-muted-foreground">
-              Add an expense to see your chart.
+              {t('add_expense_chart')}
             </CardContent>
           </Card>
         ) : (
@@ -322,11 +324,11 @@ export default function Dashboard() {
 
       {/* Recent Transactions */}
       <section className="space-y-3">
-        <h3 className="text-lg font-semibold">Recent Transactions</h3>
+        <h3 className="text-lg font-semibold">{t('recent_transactions')}</h3>
         {recentTransactions.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="p-6 text-center text-muted-foreground">
-              No transactions yet
+              {t('no_transactions')}
             </CardContent>
           </Card>
         ) : (
@@ -388,13 +390,13 @@ export default function Dashboard() {
       {/* Account spend */}
       <section className="space-y-3">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Accounts this {rangeLabel}</h3>
-          <p className="text-sm text-muted-foreground">Net worth: CA${netWorth.toLocaleString()}</p>
+          <h3 className="text-lg font-semibold">{t('accounts_this_period', { period: rangeLabel })}</h3>
+          <p className="text-sm text-muted-foreground">{t('net_worth')}: CA${netWorth.toLocaleString()}</p>
         </div>
         {accountExpense.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="p-6 text-center text-muted-foreground">
-              No spending tracked this {rangeLabel}.
+              {t('no_spending', { period: rangeLabel })}
             </CardContent>
           </Card>
         ) : (
@@ -409,7 +411,7 @@ export default function Dashboard() {
                     />
                     <div>
                       <p className="font-semibold">{acc.name}</p>
-                      <p className="text-xs text-muted-foreground">Spend this {rangeLabel}</p>
+                      <p className="text-xs text-muted-foreground">{t('spend_this_period', { period: rangeLabel })}</p>
                     </div>
                   </div>
                   <p className="text-lg font-semibold text-destructive">-CA${acc.value.toLocaleString()}</p>
@@ -423,17 +425,17 @@ export default function Dashboard() {
       {/* Credit Cards Status */}
       <section>
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Credit Cards</h3>
-          <Link href="/accounts" className="text-sm text-primary">Manage</Link>
+          <h3 className="text-lg font-semibold">{t('credit_cards')}</h3>
+          <Link href="/accounts" className="text-sm text-primary">{t('manage')}</Link>
         </div>
         <div className="space-y-3">
           {accounts.filter(a => a.type === 'CREDIT').length === 0 ? (
             <Card className="bg-muted/50 border-dashed">
               <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
                 <CreditCardIcon className="h-8 w-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">No credit cards added</p>
+                <p className="text-sm text-muted-foreground">{t('no_credit_cards')}</p>
                 <Link href="/accounts">
-                  <Button variant="link" size="sm">Add Card</Button>
+                  <Button variant="link" size="sm">{t('add_card')}</Button>
                 </Link>
               </CardContent>
             </Card>
@@ -452,12 +454,12 @@ export default function Dashboard() {
                       <div>
                         <h4 className="font-medium">{card.name}</h4>
                         <p className="text-xs text-muted-foreground">
-                          Bill Day: {card.billingDay || '-'} / Due: {card.dueDay || '-'}
+                          {t('bill_day')}: {card.billingDay || '-'} / {t('due_day')}: {card.dueDay || '-'}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Balance</p>
+                      <p className="text-sm text-muted-foreground">{t('balance')}</p>
                       <p className={cn("font-bold", card.balance < 0 ? "text-destructive" : "text-primary")}>
                         {card.balance.toLocaleString()}
                       </p>
@@ -468,8 +470,8 @@ export default function Dashboard() {
                   {card.limit && (
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>Used: {Math.round((Math.abs(card.balance) / card.limit) * 100)}%</span>
-                        <span>Limit: {card.limit.toLocaleString()}</span>
+                        <span>{t('used')}: {Math.round((Math.abs(card.balance) / card.limit) * 100)}%</span>
+                        <span>{t('limit')}: {card.limit.toLocaleString()}</span>
                       </div>
                       <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
                         <div
@@ -487,6 +489,6 @@ export default function Dashboard() {
       </section>
 
       {/* Recent Transactions */}
-    </main>
+    </main >
   )
 }

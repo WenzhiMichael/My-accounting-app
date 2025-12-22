@@ -47,6 +47,7 @@ export interface Preferences {
     appLockEnabled: boolean
     lastAccountId?: string
     passcode?: string
+    language: 'zh' | 'en'
 }
 
 interface AppState {
@@ -67,6 +68,7 @@ interface AppState {
     setAppLockEnabled: (enabled: boolean) => void
     setLastAccountId: (accountId?: string) => void
     setPasscode: (passcode?: string) => void
+    setLanguage: (lang: 'zh' | 'en') => void
 
     // Computed helpers
     getAccountBalance: (accountId: string) => number
@@ -149,6 +151,7 @@ export const useStore = create<AppState>()(
                 appLockEnabled: false,
                 lastAccountId: undefined,
                 passcode: undefined,
+                language: 'zh',
             },
 
             addAccount: (account) => set((state) => ({
@@ -293,6 +296,13 @@ export const useStore = create<AppState>()(
                 preferences: {
                     ...state.preferences,
                     passcode,
+                }
+            })),
+
+            setLanguage: (language) => set((state) => ({
+                preferences: {
+                    ...state.preferences,
+                    language,
                 }
             })),
 

@@ -7,11 +7,13 @@ import { useStore } from "@/lib/store"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { useTranslation, type TxKey } from "@/lib/i18n"
 
 const ALL = "all"
 
 export default function AllExpensesPage() {
     const { transactions, accounts, categories } = useStore()
+    const { t } = useTranslation()
     const [accountFilter, setAccountFilter] = useState<string>(ALL)
     const [startDate, setStartDate] = useState<string>("")
     const [endDate, setEndDate] = useState<string>("")
@@ -49,18 +51,18 @@ export default function AllExpensesPage() {
         <main className="min-h-screen bg-background p-4 pb-24 space-y-4">
             <header className="flex items-center justify-between pt-8 pb-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">All Expenses</h1>
-                    <p className="text-sm text-muted-foreground">Filter by account or date range</p>
+                    <h1 className="text-3xl font-bold tracking-tight">{t('all_expenses')}</h1>
+                    <p className="text-sm text-muted-foreground">{t('filter_by_account_date')}</p>
                 </div>
                 <Link href="/income">
-                    <Button variant="outline" size="sm">All Income</Button>
+                    <Button variant="outline" size="sm">{t('all_income')}</Button>
                 </Link>
             </header>
 
             <Card>
                 <CardContent className="p-4 space-y-3">
                     <div className="flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">Filtered total</p>
+                        <p className="text-sm text-muted-foreground">{t('filtered_total')}</p>
                         <p className="text-2xl font-bold text-destructive">CA${total.toLocaleString()}</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -69,7 +71,7 @@ export default function AllExpensesPage() {
                             onChange={(e) => setAccountFilter(e.target.value)}
                             className="w-full h-11 rounded-full bg-secondary px-4 text-sm font-medium outline-none border border-border"
                         >
-                            <option value={ALL}>All accounts</option>
+                            <option value={ALL}>{t('all_accounts')}</option>
                             {accounts.map(acc => (
                                 <option key={acc.id} value={acc.id}>{acc.name}</option>
                             ))}
@@ -94,7 +96,7 @@ export default function AllExpensesPage() {
                 {filtered.length === 0 ? (
                     <Card className="border-dashed">
                         <CardContent className="p-6 text-center text-muted-foreground">
-                            No expenses match your filters.
+                            {t('no_expenses_match')}
                         </CardContent>
                     </Card>
                 ) : (
@@ -111,9 +113,9 @@ export default function AllExpensesPage() {
                                             {category?.name?.[0] || '?'}
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="font-medium">{category?.name || 'Uncategorized'}</p>
+                                            <p className="font-medium">{category?.name || t('uncategorized')}</p>
                                             <p className="text-xs text-muted-foreground">
-                                                {format(new Date(tx.date), "MMM d, yyyy")} · {accountMap[tx.accountId] || 'Unknown account'}
+                                                {format(new Date(tx.date), "MMM d, yyyy")} · {accountMap[tx.accountId] || t('unknown_account')}
                                             </p>
                                             {tx.note && (
                                                 <p className="text-xs text-muted-foreground truncate max-w-[220px]">
