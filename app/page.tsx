@@ -130,17 +130,17 @@ export default function Dashboard() {
       {/* Header */}
       <header className="flex flex-col gap-4 pt-8 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t('overview')}</h1>
-          <p className="text-muted-foreground">This {rangeLabel} in CAD</p>
+          <h1 className="text-4xl font-extrabold tracking-tight text-foreground">{t('overview')}</h1>
+          <p className="text-muted-foreground mt-1">{t('period_in_cad', { period: rangeLabel })}</p>
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted p-1">
+        <div className="inline-flex items-center gap-4 rounded-full neumorphic-inset p-2">
           <button
             type="button"
             onClick={() => setDateRangeKey("week")}
             className={cn(
-              "rounded-full px-4 py-1 text-sm font-medium transition",
+              "rounded-full px-6 py-2 text-sm font-bold transition-all duration-300",
               dateRangeKey === "week"
-                ? "bg-background text-foreground shadow-sm"
+                ? "neumorphic-flat text-primary scale-105"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -150,22 +150,22 @@ export default function Dashboard() {
             type="button"
             onClick={() => setDateRangeKey("month")}
             className={cn(
-              "rounded-full px-4 py-1 text-sm font-medium transition",
+              "rounded-full px-6 py-2 text-sm font-bold transition-all duration-300",
               dateRangeKey === "month"
-                ? "bg-background text-foreground shadow-sm"
+                ? "neumorphic-flat text-primary scale-105"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            Month
+            {t('month')}
           </button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <Link href="/expenses/new">
-            <Button size="sm" className="rounded-full">{t('add')}</Button>
+            <Button size="sm" className="rounded-full px-6 text-primary">{t('add')}</Button>
           </Link>
           <Link href="/accounts">
             <Button variant="outline" size="icon" className="rounded-full">
-              <Wallet className="h-5 w-5" />
+              <Wallet className="h-5 w-5 text-muted-foreground" />
             </Button>
           </Link>
         </div>
@@ -173,30 +173,29 @@ export default function Dashboard() {
 
       {/* Overall summary */}
       <section>
-        <Card className="bg-muted/40 border-none">
-          <CardContent className="p-6 space-y-5">
-            <div className="text-center space-y-1">
-              <p className="text-sm text-muted-foreground">{t('total_balance')}</p>
+        <Card className="neumorphic-flat border-none">
+          <CardContent className="p-8 space-y-6">
+            <div className="text-center space-y-2">
+              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t('total_balance')}</p>
               <h2
                 className={cn(
-                  "text-4xl font-bold tracking-tight",
+                  "text-5xl font-black tracking-tight",
                   totalBalance < 0 ? "text-destructive" : "text-foreground"
                 )}
               >
                 CA${totalBalance.toLocaleString()}
               </h2>
             </div>
-            <div className="flex items-center justify-between gap-4 text-sm">
-              <div className="flex flex-col">
-                <span className="text-muted-foreground">{t('income')}</span>
-                <span className="font-semibold text-emerald-600">
+            <div className="grid grid-cols-2 gap-8 pt-4">
+              <div className="flex flex-col items-center p-4 rounded-2xl neumorphic-inset">
+                <span className="text-xs font-medium text-emerald-600 mb-1">{t('income')}</span>
+                <span className="font-bold text-lg text-emerald-600">
                   +CA${totalIncome.toLocaleString()}
                 </span>
               </div>
-              <div className="h-8 w-px bg-border" />
-              <div className="flex flex-col items-end">
-                <span className="text-muted-foreground">{t('expense')}</span>
-                <span className="font-semibold text-destructive">
+              <div className="flex flex-col items-center p-4 rounded-2xl neumorphic-inset">
+                <span className="text-xs font-medium text-destructive mb-1">{t('expense')}</span>
+                <span className="font-bold text-lg text-destructive">
                   -CA${totalExpense.toLocaleString()}
                 </span>
               </div>
@@ -206,27 +205,36 @@ export default function Dashboard() {
       </section>
 
       {/* Monthly summary */}
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="bg-destructive text-destructive-foreground border-none">
-          <CardContent className="p-6">
-            <p className="text-sm opacity-80">{t('spend_this_period', { period: rangeLabel })}</p>
-            <h2 className="text-3xl font-bold mt-1">
+      <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <Card className="neumorphic-flat border-none text-foreground transform transition hover:scale-[1.02]">
+          <CardContent className="p-6 flex flex-col items-center justify-center text-center">
+            <div className="h-10 w-10 rounded-full neumorphic-inset flex items-center justify-center mb-3 text-destructive">
+              <CreditCardIcon className="h-5 w-5" />
+            </div>
+            <p className="text-sm opacity-90 font-medium text-muted-foreground">{t('spend_this_period', { period: rangeLabel })}</p>
+            <h2 className="text-2xl font-bold mt-2 text-destructive">
               CA${periodExpense.toLocaleString()}
             </h2>
           </CardContent>
         </Card>
-        <Card className="bg-emerald-500 text-white border-none">
-          <CardContent className="p-6">
-            <p className="text-sm opacity-80">Title {rangeLabel} {t('income').toLowerCase()}</p>
-            <h2 className="text-3xl font-bold mt-1">
+        <Card className="neumorphic-flat border-none text-foreground transform transition hover:scale-[1.02]">
+          <CardContent className="p-6 flex flex-col items-center justify-center text-center">
+            <div className="h-10 w-10 rounded-full neumorphic-inset flex items-center justify-center mb-3 text-emerald-600">
+              <Wallet className="h-5 w-5" />
+            </div>
+            <p className="text-sm opacity-90 font-medium text-muted-foreground">{t('income_range', { range: rangeLabel })}</p>
+            <h2 className="text-2xl font-bold mt-2 text-emerald-600">
               CA${periodIncome.toLocaleString()}
             </h2>
           </CardContent>
         </Card>
-        <Card className="bg-primary text-primary-foreground border-none">
-          <CardContent className="p-6">
-            <p className="text-sm opacity-80">{t('balance')}</p>
-            <h2 className="text-3xl font-bold mt-1">
+        <Card className="neumorphic-flat border-none text-foreground transform transition hover:scale-[1.02]">
+          <CardContent className="p-6 flex flex-col items-center justify-center text-center">
+            <div className="h-10 w-10 rounded-full neumorphic-inset flex items-center justify-center mb-3 text-primary">
+              <CreditCardIcon className="h-5 w-5" />
+            </div>
+            <p className="text-sm opacity-90 font-medium text-muted-foreground">{t('balance')}</p>
+            <h2 className="text-2xl font-bold mt-2 text-primary">
               CA${periodBalance.toLocaleString()}
             </h2>
           </CardContent>
@@ -240,13 +248,13 @@ export default function Dashboard() {
           <span className="text-sm text-muted-foreground">{t('last_6_months')}</span>
         </div>
         {monthlyExpenseTrend.every(item => item.value === 0) ? (
-          <Card className="border-dashed">
+          <Card className="neumorphic-inset border-none">
             <CardContent className="p-6 text-center text-muted-foreground">
               {t('add_expenses_trend')}
             </CardContent>
           </Card>
         ) : (
-          <Card>
+          <Card className="neumorphic-flat border-none">
             <CardContent className="p-0 h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={monthlyExpenseTrend} margin={{ top: 16, right: 24, left: 0, bottom: 0 }}>
@@ -291,13 +299,13 @@ export default function Dashboard() {
           <span className="text-sm text-muted-foreground">{t('expenses_only')}</span>
         </div>
         {expenseByCategory.length === 0 ? (
-          <Card className="border-dashed">
+          <Card className="neumorphic-inset border-none">
             <CardContent className="p-6 text-center text-muted-foreground">
               {t('add_expense_chart')}
             </CardContent>
           </Card>
         ) : (
-          <Card>
+          <Card className="neumorphic-flat border-none">
             <CardContent className="p-0 h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -326,27 +334,29 @@ export default function Dashboard() {
       <section className="space-y-3">
         <h3 className="text-lg font-semibold">{t('recent_transactions')}</h3>
         {recentTransactions.length === 0 ? (
-          <Card className="border-dashed">
+          <Card className="neumorphic-inset border-none">
             <CardContent className="p-6 text-center text-muted-foreground">
               {t('no_transactions')}
             </CardContent>
           </Card>
         ) : (
-          <Card>
-            <CardContent className="p-0 divide-y">
+          <Card className="neumorphic-flat border-none divide-y divide-border/0">
+            <CardContent className="p-0">
               {recentTransactions.map(tx => {
                 const category = categories.find(c => c.id === tx.categoryId)
                 const row = (
                   <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white"
-                        style={{ backgroundColor: category?.color || '#999' }}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white neumorphic-inset"
+                        style={{ backgroundColor: 'transparent' }}
                       >
-                        {(() => {
-                          const Icon = getCategoryIcon(category?.icon)
-                          return <Icon className="h-5 w-5" />
-                        })()}
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: category?.color || '#999' }}>
+                          {(() => {
+                            const Icon = getCategoryIcon(category?.icon)
+                            return <Icon className="h-4 w-4" />
+                          })()}
+                        </div>
                       </div>
                       <div>
                         <p className="font-medium">{category?.name || 'Unknown'}</p>
@@ -369,7 +379,7 @@ export default function Dashboard() {
                     <Link
                       key={tx.id}
                       href={`/expenses/${tx.id}`}
-                      className="block hover:bg-muted/50 transition-colors"
+                      className="block hover:bg-black/5 transition-colors rounded-xl"
                     >
                       {row}
                     </Link>
@@ -394,21 +404,23 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground">{t('net_worth')}: CA${netWorth.toLocaleString()}</p>
         </div>
         {accountExpense.length === 0 ? (
-          <Card className="border-dashed">
+          <Card className="neumorphic-inset border-none">
             <CardContent className="p-6 text-center text-muted-foreground">
               {t('no_spending', { period: rangeLabel })}
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {accountExpense.map(acc => (
-              <Card key={acc.name} className="overflow-hidden">
+              <Card key={acc.name} className="overflow-hidden neumorphic-flat border-none">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div
-                      className="h-10 w-10 rounded-full"
-                      style={{ backgroundColor: acc.color }}
-                    />
+                    <div className="w-10 h-10 rounded-full neumorphic-inset flex items-center justify-center">
+                      <div
+                        className="h-8 w-8 rounded-full"
+                        style={{ backgroundColor: acc.color }}
+                      />
+                    </div>
                     <div>
                       <p className="font-semibold">{acc.name}</p>
                       <p className="text-xs text-muted-foreground">{t('spend_this_period', { period: rangeLabel })}</p>
@@ -428,28 +440,30 @@ export default function Dashboard() {
           <h3 className="text-lg font-semibold">{t('credit_cards')}</h3>
           <Link href="/accounts" className="text-sm text-primary">{t('manage')}</Link>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {accounts.filter(a => a.type === 'CREDIT').length === 0 ? (
-            <Card className="bg-muted/50 border-dashed">
+            <Card className="neumorphic-inset border-none">
               <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
                 <CreditCardIcon className="h-8 w-8 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">{t('no_credit_cards')}</p>
                 <Link href="/accounts">
-                  <Button variant="link" size="sm">{t('add_card')}</Button>
+                  <Button variant="link" size="sm" className="text-primary">{t('add_card')}</Button>
                 </Link>
               </CardContent>
             </Card>
           ) : (
             accounts.filter(a => a.type === 'CREDIT').map(card => (
-              <Card key={card.id} className="overflow-hidden">
+              <Card key={card.id} className="overflow-hidden neumorphic-flat border-none">
                 <CardContent className="p-5">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs"
-                        style={{ backgroundColor: card.color }}
-                      >
-                        {card.name.substring(0, 2).toUpperCase()}
+                      <div className="w-12 h-12 rounded-full neumorphic-inset flex items-center justify-center">
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs"
+                          style={{ backgroundColor: card.color }}
+                        >
+                          {card.name.substring(0, 2).toUpperCase()}
+                        </div>
                       </div>
                       <div>
                         <h4 className="font-medium">{card.name}</h4>
@@ -468,14 +482,14 @@ export default function Dashboard() {
 
                   {/* Progress Bar for Limit */}
                   {card.limit && (
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span>{t('used')}: {Math.round((Math.abs(card.balance) / card.limit) * 100)}%</span>
                         <span>{t('limit')}: {card.limit.toLocaleString()}</span>
                       </div>
-                      <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                      <div className="h-3 w-full neumorphic-inset rounded-full overflow-hidden p-[2px]">
                         <div
-                          className="h-full bg-primary transition-all"
+                          className="h-full bg-primary rounded-full transition-all"
                           style={{ width: `${Math.min((Math.abs(card.balance) / card.limit) * 100, 100)}%` }}
                         />
                       </div>

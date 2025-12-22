@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -289,10 +289,10 @@ export default function AddExpensePage() {
                         onChange={(e) => setRecurringType(e.target.value as RecurringType)}
                         className="bg-transparent outline-none"
                     >
-                        <option value="NONE">One-time</option>
-                        <option value="DAILY">Daily</option>
-                        <option value="WEEKLY">Weekly</option>
-                        <option value="MONTHLY">Monthly</option>
+                        <option value="NONE">{t('recurring_one_time')}</option>
+                        <option value="DAILY">{t('recurring_daily')}</option>
+                        <option value="WEEKLY">{t('recurring_weekly')}</option>
+                        <option value="MONTHLY">{t('recurring_monthly')}</option>
                     </select>
                     {recurringType !== 'NONE' && (
                         <input
@@ -357,7 +357,7 @@ export default function AddExpensePage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <div className="bg-card text-card-foreground rounded-2xl shadow-lg p-4 w-full max-w-md space-y-4">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-semibold">Choose date</h3>
+                            <h3 className="font-semibold">{t('choose_date')}</h3>
                             <Button variant="ghost" size="icon" onClick={() => setShowDatePicker(false)}>
                                 <X className="h-5 w-5" />
                             </Button>
@@ -368,7 +368,7 @@ export default function AddExpensePage() {
                             onChange={(e) => setDate(dateInputToStartOfDayIso(e.target.value))}
                             className="w-full h-12 px-4 rounded-xl bg-secondary border border-border focus:ring-2 focus:ring-primary outline-none"
                         />
-                        <Button className="w-full" onClick={() => setShowDatePicker(false)}>Done</Button>
+                        <Button className="w-full" onClick={() => setShowDatePicker(false)}>{t('done')}</Button>
                     </div>
                 </div>
             )}
@@ -386,3 +386,4 @@ function Key({ val, onClick }: Readonly<{ val: string, onClick: (v: string) => v
         </button>
     )
 }
+

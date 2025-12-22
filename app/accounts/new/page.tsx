@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { useTranslation } from "@/lib/i18n"
 
 const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#171717']
 
 export default function NewAccountPage() {
     const router = useRouter()
     const { addAccount } = useStore()
+    const { t } = useTranslation()
 
     const [name, setName] = useState("")
     const [type, setType] = useState<AccountType>("BANK")
@@ -46,46 +48,46 @@ export default function NewAccountPage() {
                         <ChevronLeft className="h-6 w-6" />
                     </Button>
                 </Link>
-                <h1 className="text-2xl font-bold">Add Account</h1>
+                <h1 className="text-2xl font-bold">{t('add_account')}</h1>
             </header>
 
             <form onSubmit={handleSubmit} className="space-y-6 max-w-md mx-auto">
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Account Type</label>
+                        <label className="text-sm font-medium">{t('account_type_label')}</label>
                         <div className="grid grid-cols-3 gap-2">
-                            {(['BANK', 'CREDIT', 'CASH'] as AccountType[]).map((t) => (
+                            {(['BANK', 'CREDIT', 'CASH'] as AccountType[]).map((typeOption) => (
                                 <button
-                                    key={t}
+                                    key={typeOption}
                                     type="button"
-                                    onClick={() => setType(t)}
+                                    onClick={() => setType(typeOption)}
                                     className={cn(
                                         "py-3 rounded-xl text-sm font-medium transition-all border",
-                                        type === t
+                                        type === typeOption
                                             ? "bg-primary text-primary-foreground border-primary shadow-md"
                                             : "bg-card text-card-foreground border-transparent hover:bg-secondary"
                                     )}
                                 >
-                                    {t === 'BANK' ? 'Debit Card' : t === 'CREDIT' ? 'Credit Card' : 'Cash'}
+                                    {typeOption === 'BANK' ? t('account_type_BANK') : typeOption === 'CREDIT' ? t('account_type_CREDIT') : t('account_type_CASH')}
                                 </button>
                             ))}
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Account Name</label>
+                        <label className="text-sm font-medium">{t('account_name_label')}</label>
                         <input
                             required
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g. Chase Sapphire"
+                            placeholder={t('account_name_placeholder')}
                             className="w-full h-12 px-4 rounded-xl bg-secondary border-none focus:ring-2 focus:ring-primary outline-none"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Current Balance</label>
+                        <label className="text-sm font-medium">{t('current_balance_label')}</label>
                         <input
                             type="number"
                             step="0.01"
@@ -95,45 +97,45 @@ export default function NewAccountPage() {
                             className="w-full h-12 px-4 rounded-xl bg-secondary border-none focus:ring-2 focus:ring-primary outline-none font-mono"
                         />
                         <p className="text-xs text-muted-foreground">
-                            {type === 'CREDIT' ? 'Negative for debt, positive for overpayment.' : 'Current money available.'}
+                            {type === 'CREDIT' ? t('current_balance_hint_credit') : t('current_balance_hint_non_credit')}
                         </p>
                     </div>
 
                     {type === 'CREDIT' && (
                         <>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Credit Limit</label>
+                                <label className="text-sm font-medium">{t('credit_limit_label')}</label>
                                 <input
                                     type="number"
                                     value={limit}
                                     onChange={(e) => setLimit(e.target.value)}
-                                    placeholder="e.g. 50000"
+                                    placeholder={t('credit_limit_placeholder')}
                                     className="w-full h-12 px-4 rounded-xl bg-secondary border-none focus:ring-2 focus:ring-primary outline-none font-mono"
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Billing Day</label>
+                                    <label className="text-sm font-medium">{t('billing_day_label')}</label>
                                     <input
                                         type="number"
                                         min="1"
                                         max="31"
                                         value={billingDay}
                                         onChange={(e) => setBillingDay(e.target.value)}
-                                        placeholder="Day (1-31)"
+                                        placeholder={t('day_placeholder')}
                                         className="w-full h-12 px-4 rounded-xl bg-secondary border-none focus:ring-2 focus:ring-primary outline-none"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Due Day</label>
+                                    <label className="text-sm font-medium">{t('due_day_label')}</label>
                                     <input
                                         type="number"
                                         min="1"
                                         max="31"
                                         value={dueDay}
                                         onChange={(e) => setDueDay(e.target.value)}
-                                        placeholder="Day (1-31)"
+                                        placeholder={t('day_placeholder')}
                                         className="w-full h-12 px-4 rounded-xl bg-secondary border-none focus:ring-2 focus:ring-primary outline-none"
                                     />
                                 </div>
@@ -142,7 +144,7 @@ export default function NewAccountPage() {
                     )}
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Color</label>
+                        <label className="text-sm font-medium">{t('color_label')}</label>
                         <div className="flex flex-wrap gap-3">
                             {COLORS.map((color) => (
                                 <button
@@ -161,7 +163,7 @@ export default function NewAccountPage() {
                 </div>
 
                 <Button type="submit" className="w-full text-lg h-14 rounded-2xl mt-8">
-                    Save Account
+                    {t('save_account')}
                 </Button>
             </form>
         </main>

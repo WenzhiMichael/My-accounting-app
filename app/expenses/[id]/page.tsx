@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useStore, TransactionType } from "@/lib/store"
 import { cn, dateInputToStartOfDayIso, toStartOfDayIso } from "@/lib/utils"
+import { useTranslation } from "@/lib/i18n"
 
 export default function EditTransactionPage() {
     const router = useRouter()
     const params = useParams<{ id: string }>()
     const { transactions, accounts, categories, updateTransaction, deleteTransaction } = useStore()
+    const { t } = useTranslation()
 
     const transaction = transactions.find(t => t.id === params?.id)
 
@@ -69,10 +71,10 @@ export default function EditTransactionPage() {
             <main className="min-h-screen flex items-center justify-center p-6 text-center">
                 <Card className="max-w-md w-full">
                     <CardContent className="p-6 space-y-4">
-                        <p className="font-semibold text-lg">Transaction not found</p>
-                        <p className="text-muted-foreground text-sm">It may have been deleted.</p>
+                        <p className="font-semibold text-lg">{t('transaction_not_found')}</p>
+                        <p className="text-muted-foreground text-sm">{t('transaction_deleted')}</p>
                         <Link href="/expenses">
-                            <Button>Back to list</Button>
+                            <Button>{t('back_to_list')}</Button>
                         </Link>
                     </CardContent>
                 </Card>
@@ -84,24 +86,24 @@ export default function EditTransactionPage() {
         <main className="min-h-screen bg-background p-4 pb-24 space-y-6">
             <header className="flex items-center justify-between pt-8">
                 <Link href="/expenses">
-                    <Button variant="ghost" size="sm">Back</Button>
+                    <Button variant="ghost" size="sm">{t('back')}</Button>
                 </Link>
-                <Button variant="destructive" size="sm" onClick={handleDelete}>Delete</Button>
+                <Button variant="destructive" size="sm" onClick={handleDelete}>{t('delete')}</Button>
             </header>
 
             <div className="space-y-6 max-w-xl mx-auto">
                 <div className="flex items-center justify-center gap-2 bg-secondary rounded-full p-1 w-fit mx-auto">
-                    {(['EXPENSE', 'INCOME'] as TransactionType[]).map((t) => (
+                    {(['EXPENSE', 'INCOME'] as TransactionType[]).map((typeOption) => (
                         <button
-                            key={t}
-                            onClick={() => setType(t)}
+                            key={typeOption}
+                            onClick={() => setType(typeOption)}
                             className={cn(
                                 "px-4 py-2 rounded-full text-sm font-medium transition-all",
-                                type === t ? "bg-background shadow-sm" : "text-muted-foreground"
+                                type === typeOption ? "bg-background shadow-sm" : "text-muted-foreground"
                             )}
                             type="button"
                         >
-                            {t === 'EXPENSE' ? 'Expense' : 'Income'}
+                            {typeOption === 'EXPENSE' ? t('expense') : t('income')}
                         </button>
                     ))}
                 </div>
@@ -109,7 +111,7 @@ export default function EditTransactionPage() {
                 <Card>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Amount (CAD)</label>
+                            <label className="text-sm font-medium">{t('amount_cad')}</label>
                             <input
                                 type="number"
                                 step="0.01"
@@ -120,7 +122,7 @@ export default function EditTransactionPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Account</label>
+                            <label className="text-sm font-medium">{t('account')}</label>
                             <select
                                 value={accountId}
                                 onChange={(e) => setAccountId(e.target.value)}
@@ -133,7 +135,7 @@ export default function EditTransactionPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Category</label>
+                            <label className="text-sm font-medium">{t('category')}</label>
                             <select
                                 value={categoryId}
                                 onChange={(e) => setCategoryId(e.target.value)}
@@ -146,7 +148,7 @@ export default function EditTransactionPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Date</label>
+                            <label className="text-sm font-medium">{t('date')}</label>
                             <input
                                 type="date"
                                 value={dateValue}
@@ -156,18 +158,18 @@ export default function EditTransactionPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Note</label>
+                            <label className="text-sm font-medium">{t('note')}</label>
                             <input
                                 type="text"
                                 value={note}
-                                placeholder="Optional details"
+                                placeholder={t('optional_details')}
                                 onChange={(e) => setNote(e.target.value)}
                                 className="w-full h-12 px-4 rounded-xl bg-secondary border-none focus:ring-2 focus:ring-primary outline-none"
                             />
                         </div>
 
                         <Button className="w-full h-12 rounded-xl" onClick={handleSave}>
-                            Save changes
+                            {t('save_changes')}
                         </Button>
                     </CardContent>
                 </Card>

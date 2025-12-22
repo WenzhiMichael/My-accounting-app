@@ -4,13 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useStore, ThemePreference } from "@/lib/store"
-import { useTranslation, Language } from "@/lib/i18n"
-
-const themes: { label: string; value: ThemePreference }[] = [
-    { label: "System", value: "system" },
-    { label: "Light", value: "light" },
-    { label: "Dark", value: "dark" },
-]
+import { useTranslation } from "@/lib/i18n"
 
 export default function SettingsPage() {
     const { preferences, setTheme, setAppLockEnabled, setPasscode, setLanguage } = useStore()
@@ -19,14 +13,20 @@ export default function SettingsPage() {
     const [passcodeConfirm, setPasscodeConfirm] = useState(preferences.passcode || "")
     const [message, setMessage] = useState<string | null>(null)
 
+    const themes: { label: string; value: ThemePreference }[] = [
+        { label: t('theme_system'), value: "system" },
+        { label: t('theme_light'), value: "light" },
+        { label: t('theme_dark'), value: "dark" },
+    ]
+
     const savePasscode = () => {
         setMessage(null)
         if (passcode !== passcodeConfirm) {
-            setMessage("Passcodes do not match.")
+            setMessage(t('passcode_mismatch'))
             return
         }
         setPasscode(passcode || undefined)
-        setMessage(passcode ? "Passcode saved." : "Passcode cleared.")
+        setMessage(passcode ? t('passcode_saved') : t('passcode_cleared'))
     }
 
     const handleExport = () => {
@@ -46,7 +46,7 @@ export default function SettingsPage() {
         const file = e.target.files?.[0]
         if (!file) return
 
-        if (!confirm("Importig data will overwrite your current data. Continue?")) {
+        if (!confirm(t('import_confirm'))) {
             e.target.value = ""
             return
         }
@@ -57,13 +57,13 @@ export default function SettingsPage() {
                 const json = JSON.parse(event.target?.result as string)
                 if (json.accounts && json.transactions) {
                     useStore.setState(json)
-                    alert("Data imported successfully!")
+                    alert(t('import_success'))
                 } else {
-                    alert("Invalid data file: missing accounts or transactions.")
+                    alert(t('import_invalid'))
                 }
             } catch (err) {
                 console.error(err)
-                alert("Error parsing JSON file.")
+                alert(t('import_error'))
             }
         }
         reader.readAsText(file)
@@ -74,36 +74,36 @@ export default function SettingsPage() {
         <main className="min-h-screen bg-background p-4 pb-24 space-y-6">
             <header className="pt-8 pb-2">
                 <h1 className="text-3xl font-bold tracking-tight">{t('settings')}</h1>
-                <p className="text-muted-foreground text-sm">Appearance, language and security</p>
+                <p className="text-muted-foreground text-sm">{t('settings_subtitle')}</p>
             </header>
 
-            <Card>
+            <Card className="glass">
                 <CardContent className="p-4 space-y-3">
                     <h2 className="font-semibold text-lg">{t('language')}</h2>
-                    <p className="text-sm text-muted-foreground">Choose your preferred language.</p>
+                    <p className="text-sm text-muted-foreground">{t('choose_language')}</p>
                     <div className="grid grid-cols-2 gap-2">
                         <Button
                             variant={preferences.language === 'zh' ? "default" : "outline"}
                             onClick={() => setLanguage('zh')}
                             className="w-full rounded-xl"
                         >
-                            中文 (Chinese)
+                            {t('language_zh')}
                         </Button>
                         <Button
                             variant={preferences.language === 'en' ? "default" : "outline"}
                             onClick={() => setLanguage('en')}
                             className="w-full rounded-xl"
                         >
-                            English
+                            {t('language_en')}
                         </Button>
                     </div>
                 </CardContent>
             </Card>
 
-            <Card>
+            <Card className="neumorphic-flat">
                 <CardContent className="p-4 space-y-3">
                     <h2 className="font-semibold text-lg">{t('theme')}</h2>
-                    <p className="text-sm text-muted-foreground">Choose light, dark, or follow system.</p>
+                    <p className="text-sm text-muted-foreground">{t('choose_theme')}</p>
                     <div className="grid grid-cols-3 gap-2">
                         {themes.map((option) => (
                             <Button
@@ -119,13 +119,13 @@ export default function SettingsPage() {
                 </CardContent>
             </Card>
 
-            <Card>
+            <Card className="neumorphic-flat">
                 <CardContent className="p-4 space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
                             <h2 className="font-semibold text-lg">{t('app_lock')}</h2>
                             <p className="text-sm text-muted-foreground">
-                                Require biometrics or passcode on launch.
+                                {t('require_biometrics')}
                             </p>
                         </div>
                         <label className="inline-flex items-center gap-2 text-sm font-medium">
@@ -135,7 +135,7 @@ export default function SettingsPage() {
                                 onChange={(e) => setAppLockEnabled(e.target.checked)}
                                 className="h-4 w-4 accent-primary"
                             />
-                            Enable
+                            {t('enable')}
                         </label>
                     </div>
 
@@ -147,17 +147,17 @@ export default function SettingsPage() {
                                 value={passcode}
                                 onChange={(e) => setPasscodeInput(e.target.value)}
                                 className="w-full h-11 px-4 rounded-xl bg-secondary border border-border focus:ring-2 focus:ring-primary outline-none"
-                                placeholder="Set a fallback passcode"
+                                placeholder={t('passcode_placeholder')}
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Confirm Passcode</label>
+                            <label className="text-sm font-medium">{t('passcode_confirm')}</label>
                             <input
                                 type="password"
                                 value={passcodeConfirm}
                                 onChange={(e) => setPasscodeConfirm(e.target.value)}
                                 className="w-full h-11 px-4 rounded-xl bg-secondary border border-border focus:ring-2 focus:ring-primary outline-none"
-                                placeholder="Repeat passcode"
+                                placeholder={t('passcode_repeat_placeholder')}
                             />
                         </div>
                     </div>
@@ -166,17 +166,17 @@ export default function SettingsPage() {
                     </Button>
                     {message && <p className="text-sm text-muted-foreground">{message}</p>}
                     <p className="text-xs text-muted-foreground">
-                        Your device biometrics will be used when available. Passcode acts as a fallback.
+                        {t('biometrics_note')}
                     </p>
                 </CardContent>
             </Card>
 
-            <Card>
+            <Card className="neumorphic-flat">
                 <CardContent className="p-4 space-y-4">
                     <div>
                         <h2 className="font-semibold text-lg">{t('data_management')}</h2>
                         <p className="text-sm text-muted-foreground">
-                            Backup or restore your data locally.
+                            {t('backup_restore_description')}
                         </p>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
