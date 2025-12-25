@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { format } from "date-fns"
-import { Calendar, Delete, Repeat, X } from "lucide-react"
+import { Calendar, Delete, Repeat, X, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn, dateInputToStartOfDayIso, toStartOfDayIso } from "@/lib/utils"
 import { useStore, TransactionType } from "@/lib/store"
@@ -24,6 +24,7 @@ export default function AddExpensePage() {
     const firstExpenseId = useMemo(() => categories.find(c => c.type === 'EXPENSE')?.id, [categories])
     const firstIncomeId = useMemo(() => categories.find(c => c.type === 'INCOME')?.id, [categories])
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(firstExpenseId)
+    const [expandedGroup, setExpandedGroup] = useState<string | null>(null) // New State for Accordion
     const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>(
         preferences.lastAccountId || accounts[0]?.id
     )
@@ -165,7 +166,7 @@ export default function AddExpensePage() {
             )}
 
             {/* Header */}
-            <header className="flex items-center justify-between p-4">
+            <header className="flex items-center justify-between p-3">
                 <Button variant="ghost" size="icon" onClick={() => router.back()}>
                     <X className="h-6 w-6" />
                 </Button>
@@ -178,14 +179,14 @@ export default function AddExpensePage() {
                     />
                     <button
                         onClick={() => { setType('EXPENSE'); setSelectedCategoryId(firstExpenseId) }}
-                        className={cn("relative z-10 px-4 py-1 rounded-full text-sm font-medium transition-all",
+                        className={cn("relative z-10 px-3 py-1 rounded-full text-xs font-medium transition-all",
                             type === 'EXPENSE' ? "text-foreground" : "text-muted-foreground")}
                     >
                         {t('expense')}
                     </button>
                     <button
                         onClick={() => { setType('INCOME'); setSelectedCategoryId(firstIncomeId) }}
-                        className={cn("relative z-10 px-4 py-1 rounded-full text-sm font-medium transition-all",
+                        className={cn("relative z-10 px-3 py-1 rounded-full text-xs font-medium transition-all",
                             type === 'INCOME' ? "text-foreground" : "text-muted-foreground")}
                     >
                         {t('income')}
@@ -194,71 +195,124 @@ export default function AddExpensePage() {
                 <div className="w-10" />
             </header>
 
-            {/* Category Grid */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {groupedCategories.map(group => (
-                    <div key={group.name} className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-                            <span>{group.name}</span>
-                            <div className="h-px bg-border flex-1" />
-                        </div>
-                        <div className="grid grid-cols-4 gap-3">
-                            {group.items.map(cat => {
-                                const Icon = getCategoryIcon(cat.icon)
-                                const isSelected = selectedCategoryId === cat.id
-                                return (
-                                    <button
-                                        key={cat.id}
-                                        onClick={() => setSelectedCategoryId(cat.id)}
-                                        className={cn(
-                                            "flex flex-col items-center gap-2 transition-all",
-                                            shakeCategory && isSelected ? "animate-pulse" : ""
-                                        )}
-                                    >
-                                        <div
+            {/* Category Accordion */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-1">
+                {Object.entries(
+                    categories
+                        .filter(c => c.type === type)
+                        .reduce((acc, cat) => {
+                            // Map legacy Chinese group names to new i18n keys for grouping
+                            const GROUP_MAP: Record<string, string> = {
+                                '餐饮美食': 'group_food',
+                                '交通出行': 'group_transport',
+                                '购物消费': 'group_shopping',
+                                '居住缴费': 'group_housing',
+                                '休闲娱乐': 'group_entertainment',
+                                '医疗教育': 'group_medical',
+                                '人情往来': 'group_social',
+                                '其他': 'group_others',
+                                '收入': 'group_income'
+                            }
+
+                            const groupKey = cat.groupKey || GROUP_MAP[cat.group || ''] || cat.group || 'qt';
+                            if (!acc[groupKey]) acc[groupKey] = [];
+                            acc[groupKey].push(cat);
+                            return acc;
+                        }, {} as Record<string, typeof categories>)
+                ).map(([groupKey, items]) => {
+                    // Find a translation for the group name using the key
+                    // If groupKey is a valid translation key (starts with group_), translate it
+                    // Otherwise rely on fallback
+                    const isTranslationKey = groupKey.startsWith('group_');
+                    const groupLabel = isTranslationKey ? t(groupKey as any) : (items[0]?.group || groupKey);
+                    const isExpanded = expandedGroup === groupKey;
+
+                    return (
+                        <div key={groupKey} className="rounded-xl overflow-hidden shadow-sm transition-all duration-300" style={{ backgroundColor: 'var(--accordion-bg)' }}>
+                            <button
+                                onClick={() => setExpandedGroup(isExpanded ? null : groupKey)}
+                                className={cn(
+                                    "w-full flex items-center justify-between p-3 transition-colors",
+                                    isExpanded ? "bg-primary/5 text-primary" : "hover:bg-[var(--accordion-hover)]"
+                                )}
+                            >
+                                <span className="font-semibold text-base">{groupLabel}</span>
+                                <ChevronDown className={cn(
+                                    "w-4 h-4 transition-transform duration-300",
+                                    isExpanded ? "rotate-180" : ""
+                                )} />
+                            </button>
+
+                            <div className={cn(
+                                "grid grid-cols-2 gap-4 overflow-hidden transition-all duration-300 sm:grid-cols-3 lg:grid-cols-4 justify-items-center",
+                                isExpanded ? "p-3 border-t border-gray-100 dark:border-zinc-800 opacity-100" : "max-h-0 opacity-0"
+                            )}>
+                                {items.map(cat => {
+                                    const Icon = getCategoryIcon(cat.icon)
+                                    const isSelected = selectedCategoryId === cat.id
+                                    const catName = cat.translationKey ? t(cat.translationKey as any) : cat.name;
+
+                                    return (
+                                        <button
+                                            key={cat.id}
+                                            onClick={() => setSelectedCategoryId(cat.id)}
                                             className={cn(
-                                                "w-14 h-14 rounded-full flex items-center justify-center transition-all",
-                                                isSelected ? "scale-110 ring-2 ring-offset-2 ring-primary" : "bg-secondary"
+                                                "flex flex-col items-center gap-2 transition-all",
+                                                shakeCategory && isSelected ? "animate-pulse" : ""
                                             )}
-                                            style={{ backgroundColor: isSelected ? cat.color : undefined }}
                                         >
-                                            <Icon className={cn("h-6 w-6", isSelected ? "text-white" : "text-foreground")} />
-                                        </div>
-                                        <span className="text-[11px] text-muted-foreground text-center leading-tight">{cat.name}</span>
-                                    </button>
-                                )
-                            })}
+                                            <div
+                                                className={cn(
+                                                    "w-16 h-16 rounded-full flex items-center justify-center transition-all",
+                                                    isSelected ? "scale-105 ring-2 ring-offset-2 ring-primary" : "bg-[var(--bg-subtle)]"
+                                                )}
+                                                style={{ backgroundColor: isSelected ? cat.color : undefined }}
+                                            >
+                                                <Icon className={cn("h-8 w-8 transition-colors",
+                                                    isSelected ? "text-white" : "text-muted-foreground"
+                                                )} />
+                                            </div>
+                                            <span className={cn(
+                                                "text-xs text-center leading-tight truncate w-full",
+                                                isSelected ? "font-medium text-foreground" : "text-muted-foreground"
+                                            )}>
+                                                {catName}
+                                            </span>
+                                        </button>
+                                    )
+                                })}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    )
+                })}
             </div>
 
             {/* Input Area */}
-            <div className="bg-secondary/30 rounded-t-[2rem] p-6 pb-8 shadow-[0_-4px_20px_-2px_rgba(0,0,0,0.05)]">
+            <div className="bg-secondary/30 rounded-t-[1.5rem] p-4 pb-5 shadow-[0_-4px_16px_-2px_rgba(0,0,0,0.05)]">
                 {/* Display */}
-                <div className="flex items-end justify-between mb-6 px-2">
+                <div className="flex items-end justify-between mb-4 px-1">
                     <div className="flex items-center gap-2">
-                        <div className="bg-white dark:bg-zinc-800 p-2 rounded-lg shadow-sm">
+                        <div className="bg-[var(--bg-surface-white)] p-1.5 rounded-md shadow-sm">
                             <div
-                                className="w-6 h-6 rounded-full flex items-center justify-center"
+                                className="w-5 h-5 rounded-full flex items-center justify-center"
                                 style={{ backgroundColor: selectedCategory?.color }}
                             >
-                                <SelectedCategoryIcon className="h-4 w-4 text-white" />
+                                <SelectedCategoryIcon className="h-3.5 w-3.5 text-white" />
                             </div>
                         </div>
                     </div>
                     <span className="font-medium">{selectedCategory?.name || t('choose_category')}</span>
                 </div>
-                <div className="text-4xl font-bold tracking-tight">
+                <div className="text-3xl font-bold tracking-tight">
                     CA${amount}
                 </div>
             </div>
 
             {/* Controls */}
-            <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide items-center">
+            <div className="flex gap-1.5 mb-3 overflow-x-auto pb-2 scrollbar-hide items-center">
                 <button
                     onClick={() => setShowDatePicker(true)}
-                    className="flex items-center gap-2 bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm font-medium shadow-sm whitespace-nowrap"
+                    className="flex items-center gap-2 bg-[var(--bg-surface-white)] px-2.5 py-1.5 rounded-full text-xs font-medium shadow-sm whitespace-nowrap"
                 >
                     <Calendar className="h-4 w-4" />
                     <span>{dateLabel}</span>
@@ -269,7 +323,7 @@ export default function AddExpensePage() {
                         setSelectedAccountId(e.target.value)
                         setLastAccountId(e.target.value)
                     }}
-                    className="bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm font-medium shadow-sm outline-none appearance-none"
+                    className="bg-[var(--bg-surface-white)] px-2.5 py-1.5 rounded-full text-xs font-medium shadow-sm outline-none appearance-none"
                 >
                     {accounts.map(acc => (
                         <option key={acc.id} value={acc.id}>{acc.name}</option>
@@ -280,9 +334,9 @@ export default function AddExpensePage() {
                     placeholder={t('note')}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    className="bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm shadow-sm outline-none min-w-[120px]"
+                    className="bg-[var(--bg-surface-white)] px-2.5 py-1.5 rounded-full text-xs shadow-sm outline-none min-w-[100px]"
                 />
-                <div className="flex items-center gap-2 bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm shadow-sm">
+                <div className="flex items-center gap-2 bg-[var(--bg-surface-white)] px-2.5 py-1.5 rounded-full text-xs shadow-sm">
                     <Repeat className="h-4 w-4 text-muted-foreground" />
                     <select
                         value={recurringType}
@@ -316,7 +370,7 @@ export default function AddExpensePage() {
                                 if (amount === "0") setAmount(tx.amount.toString())
                                 if (!selectedCategoryId) setSelectedCategoryId(tx.categoryId)
                             }}
-                            className="flex items-center gap-2 bg-white dark:bg-zinc-800 px-3 py-2 rounded-full text-sm shadow-sm whitespace-nowrap"
+                            className="flex items-center gap-2 bg-[var(--bg-surface-white)] px-2.5 py-1.5 rounded-full text-xs shadow-sm whitespace-nowrap"
                         >
                             <span className="font-semibold">{tx.note}</span>
                             <span className="text-muted-foreground">CA${tx.amount.toLocaleString()}</span>
@@ -326,7 +380,7 @@ export default function AddExpensePage() {
             )}
 
             {/* Keypad */}
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-4 gap-2">
                 {['7', '8', '9'].map(k => (
                     <Key key={k} val={k} onClick={handleDigit} />
                 ))}
@@ -341,13 +395,13 @@ export default function AddExpensePage() {
                 <div />
                 <Key val="." onClick={handleDigit} />
                 <Key val="0" onClick={handleDigit} />
-                <button onClick={handleBackspace} className="flex items-center justify-center h-14 rounded-2xl bg-white text-foreground border border-border dark:bg-zinc-800 dark:text-white shadow-sm active:scale-95 transition-transform">
-                    <Delete className="h-6 w-6" />
+                <button onClick={handleBackspace} className="flex items-center justify-center h-12 rounded-xl bg-[var(--bg-surface-white)] text-foreground border border-border shadow-sm active:scale-95 transition-transform">
+                    <Delete className="h-5 w-5" />
                 </button>
                 <button
                     onClick={handleSubmit}
                     disabled={Number.parseFloat(amount) <= 0 || !selectedCategoryId || !selectedAccountId}
-                    className="flex items-center justify-center h-14 rounded-2xl bg-primary text-primary-foreground shadow-lg active:scale-95 transition-transform font-bold text-lg disabled:opacity-50"
+                    className="flex items-center justify-center h-12 rounded-xl bg-primary text-primary-foreground shadow-lg active:scale-95 transition-transform font-bold text-base disabled:opacity-50"
                 >
                     {t('ok')}
                 </button>
@@ -380,7 +434,7 @@ function Key({ val, onClick }: Readonly<{ val: string, onClick: (v: string) => v
     return (
         <button
             onClick={() => onClick(val)}
-            className="flex items-center justify-center h-14 rounded-2xl bg-white text-foreground border border-border dark:bg-zinc-800 dark:text-white text-2xl font-medium shadow-sm active:scale-95 transition-transform"
+            className="flex items-center justify-center h-12 rounded-xl bg-[var(--bg-surface-white)] text-foreground border border-border text-xl font-medium shadow-sm active:scale-95 transition-transform"
         >
             {val}
         </button>
