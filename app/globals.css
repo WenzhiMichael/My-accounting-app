@@ -48,6 +48,8 @@
   --bg-surface-white: #FFFFFF;
   --bg-subtle: #F3F4F6;
   /* gray-100 */
+  --surface: #F5F7FA;
+  --surface-muted: #EEF1F5;
 
   color-scheme: light;
 }
@@ -95,6 +97,8 @@
     /* zinc-800 */
     --bg-subtle: #27272a;
     /* zinc-800 */
+    --surface: #2F2F2F;
+    --surface-muted: #262626;
 
     --font-sans: var(--font-inter);
 
@@ -132,6 +136,8 @@
   /* zinc-800 */
   --bg-subtle: #27272a;
   /* zinc-800 */
+  --surface: #2F2F2F;
+  --surface-muted: #262626;
 
   --font-sans: var(--font-inter);
   color-scheme: dark;
@@ -199,4 +205,45 @@ body {
   color: var(--primary);
   background: none;
   -webkit-text-fill-color: var(--foreground);
+}
+
+.modal-overlay {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .modal-overlay {
+    background: rgba(9, 9, 11, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+}
+
+:root[data-theme="dark"] .modal-overlay {
+  background: rgba(9, 9, 11, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.neu-modal {
+  background: var(--surface);
+  box-shadow:
+    12px 12px 24px var(--shadow-dark),
+    -12px -12px 24px var(--shadow-light);
+}
+
+.neu-raised {
+  background: var(--surface);
+  box-shadow:
+    6px 6px 12px var(--shadow-dark),
+    -6px -6px 12px var(--shadow-light);
+}
+
+.neu-inset {
+  background: var(--surface);
+  box-shadow:
+    inset 4px 4px 8px var(--shadow-dark),
+    inset -4px -4px 8px var(--shadow-light);
 }

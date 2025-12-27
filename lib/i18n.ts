@@ -41,6 +41,7 @@ export const translations = {
         net_worth: 'Net worth',
         no_spending: 'No spending tracked this {{period}}.',
         spend_this_period: 'Spend this {{period}}',
+        income_this_period: 'Income this {{period}}',
         period_in_cad: 'This {{period}} in CAD',
 
         // Credit Cards
@@ -275,6 +276,7 @@ export const translations = {
         net_worth: '净资产',
         no_spending: '{{period}}无支出。',
         spend_this_period: '{{period}}支出',
+        income_this_period: '{{period}}收入',
         period_in_cad: '{{period}}（加元）',
 
         // Credit Cards
@@ -477,7 +479,7 @@ export type TxKey = keyof typeof translations.en
 
 export function useTranslation() {
     const { preferences } = useStore()
-    const lang = preferences.language || 'zh' // Default to Chinese if not set
+    const lang = preferences.language || 'en' // Default to English if not set
 
     function t(key: TxKey, params?: Record<string, string>) {
         let text: string = translations[lang][key] || translations['en'][key] || key
@@ -493,4 +495,3 @@ export function useTranslation() {
 
     return { t, lang }
 }
-

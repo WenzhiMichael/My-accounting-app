@@ -108,14 +108,16 @@ export default function TransactionsPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2 bg-secondary px-2 py-1 rounded-full text-xs">
+                <div className="flex items-center gap-2 rounded-full text-xs neu-inset p-1">
                     {(["all", "week", "month", "halfyear"] as Range[]).map(r => (
                         <button
                             key={r}
                             onClick={() => setRange(r)}
                             className={cn(
-                                "px-3 py-1 rounded-full font-medium transition-colors",
-                                range === r ? "bg-background shadow-sm" : "text-muted-foreground"
+                                "px-3 py-1.5 rounded-full font-semibold transition-all duration-200",
+                                range === r
+                                    ? "neumorphic-pressed text-foreground"
+                                    : "neumorphic-flat text-muted-foreground hover:text-foreground"
                             )}
                         >
                             {labelForRange(r)}

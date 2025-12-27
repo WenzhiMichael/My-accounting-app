@@ -133,15 +133,15 @@ export default function Dashboard() {
           <h1 className="text-4xl font-extrabold tracking-tight text-foreground">{t('overview')}</h1>
           <p className="text-muted-foreground mt-1">{t('period_in_cad', { period: rangeLabel })}</p>
         </div>
-        <div className="inline-flex items-center gap-4 rounded-full neumorphic-inset p-2">
+        <div className="inline-flex items-center gap-3 rounded-full neumorphic-inset p-2">
           <button
             type="button"
             onClick={() => setDateRangeKey("week")}
             className={cn(
               "rounded-full px-6 py-2 text-sm font-bold transition-all duration-300",
               dateRangeKey === "week"
-                ? "neumorphic-flat text-primary scale-105"
-                : "text-muted-foreground hover:text-foreground",
+                ? "neumorphic-pressed text-primary"
+                : "neumorphic-flat text-muted-foreground hover:text-foreground",
             )}
           >
             {t('week')}
@@ -152,8 +152,8 @@ export default function Dashboard() {
             className={cn(
               "rounded-full px-6 py-2 text-sm font-bold transition-all duration-300",
               dateRangeKey === "month"
-                ? "neumorphic-flat text-primary scale-105"
-                : "text-muted-foreground hover:text-foreground",
+                ? "neumorphic-pressed text-primary"
+                : "neumorphic-flat text-muted-foreground hover:text-foreground",
             )}
           >
             {t('month')}
@@ -222,7 +222,7 @@ export default function Dashboard() {
             <div className="h-10 w-10 rounded-full neumorphic-inset flex items-center justify-center mb-3 text-emerald-600">
               <Wallet className="h-5 w-5" />
             </div>
-            <p className="text-sm opacity-90 font-medium text-muted-foreground">{t('income_range', { range: rangeLabel })}</p>
+            <p className="text-sm opacity-90 font-medium text-muted-foreground">{t('income_this_period', { period: rangeLabel })}</p>
             <h2 className="text-2xl font-bold mt-2 text-emerald-600">
               CA${periodIncome.toLocaleString()}
             </h2>
