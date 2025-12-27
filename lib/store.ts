@@ -153,7 +153,7 @@ export const useStore = create<AppState>()(
                 appLockEnabled: false,
                 lastAccountId: undefined,
                 passcode: undefined,
-                language: 'zh',
+                language: 'en',
             },
 
             addAccount: (account) => set((state) => ({
