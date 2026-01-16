@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { format } from "date-fns"
-import { Calendar, Delete, Repeat, X, Pen } from "lucide-react"
+import { Calendar, Delete, Repeat, X, Pen, Camera, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn, dateInputToStartOfDayIso, toStartOfDayIso } from "@/lib/utils"
 import { useStore, TransactionType } from "@/lib/store"
 import { categoryIconMap, defaultCategoryIcon, getCategoryIcon } from "@/lib/category-icons"
 import { useTranslation } from "@/lib/i18n"
+import { scanReceipt } from "@/app/actions/scan-receipt"
 
 type RecurringType = 'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY'
 
@@ -42,6 +43,9 @@ export default function AddExpensePage() {
     const [toast, setToast] = useState<string | null>(null)
     const [shakeCategory, setShakeCategory] = useState(false)
     const [isAmountFocused, setIsAmountFocused] = useState(false)
+
+    // Scan State
+    const [isScanning, setIsScanning] = useState(false)
 
     // --- Logic ---
 
@@ -179,6 +183,64 @@ export default function AddExpensePage() {
         })
     }
 
+    const handleScanUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setIsScanning(true)
+        setToast(t('scanning') || "Scanning receipt...")
+
+        try {
+            const formData = new FormData()
+            formData.append("file", file)
+            const result = await scanReceipt(formData)
+
+            if (result.success && result.data) {
+                const { amount, date, merchant, categoryId } = result.data
+
+                // 1. Amount
+                if (amount) {
+                    setAmount(amount.toString())
+                }
+
+                // 2. Date
+                if (date) {
+                    try {
+                        setDate(dateInputToStartOfDayIso(date))
+                    } catch { /* ignore invalid date */ }
+                }
+
+                // 3. Note / Merchant
+                if (merchant) {
+                    setNote(merchant)
+                }
+
+                // 4. Smart Category Match (Direct ID)
+                if (categoryId) {
+                    const match = categories.find(c => c.id === categoryId)
+                    if (match) {
+                        setSelectedCategoryId(match.id)
+                        // Auto-switch to matched type (Expense/Income)
+                        if (match.type && match.type !== type) {
+                            setType(match.type as TransactionType)
+                        }
+                    }
+                }
+
+                setToast(t('scan_success') || "Receipt scanned!")
+            } else {
+                setToast(result.error || "Failed to scan.")
+            }
+        } catch (error) {
+            console.error(error)
+            setToast("Error scanning receipt")
+        } finally {
+            setIsScanning(false)
+            // Clear input value to allow re-upload same file
+            e.target.value = ""
+        }
+    }
+
     const triggerToast = (msg: string) => {
         setToast(msg)
         setTimeout(() => setToast(null), 1800)
@@ -274,7 +336,8 @@ export default function AddExpensePage() {
         <>
             {/* Toast Overlay */}
             {toast && (
-                <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] bg-destructive text-destructive-foreground px-6 py-2.5 rounded-full shadow-lg text-sm font-semibold animate-in fade-in slide-in-from-top-4">
+                <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] bg-destructive text-destructive-foreground px-6 py-2.5 rounded-full shadow-lg text-sm font-semibold animate-in fade-in slide-in-from-top-4 flex items-center gap-2">
+                    {isScanning && <Loader2 className="h-4 w-4 animate-spin" />}
                     {toast}
                 </div>
             )}
@@ -335,7 +398,11 @@ export default function AddExpensePage() {
                     </div>
 
                     <div className="w-10 flex justify-end">
-                        {/* Placeholder for settings or other actions */}
+                        {/* Camera Button for Mobile */}
+                        <label className={cn("flex items-center justify-center w-10 h-10 rounded-full active:bg-secondary transition-colors cursor-pointer", isScanning && "opacity-50 pointer-events-none")}>
+                            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleScanUpload} disabled={isScanning} />
+                            {isScanning ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : <Camera className="h-5 w-5 text-muted-foreground" />}
+                        </label>
                     </div>
                 </header>
 
@@ -491,7 +558,14 @@ export default function AddExpensePage() {
 
                             {/* Amount Input (Editable) */}
                             <div className="flex flex-col justify-center">
-                                <label className="text-sm font-medium text-muted-foreground mb-4 block">{t('amount')}</label>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="text-sm font-medium text-muted-foreground">{t('amount')}</label>
+                                    <label className={cn("flex items-center gap-1.5 text-xs font-semibold text-primary/80 hover:text-primary cursor-pointer transition-colors px-2 py-1 rounded-md hover:bg-primary/5", isScanning && "opacity-50")}>
+                                        <input type="file" accept="image/*" className="hidden" onChange={handleScanUpload} disabled={isScanning} />
+                                        {isScanning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+                                        <span>{isScanning ? "Scanning..." : "Scan Receipt"}</span>
+                                    </label>
+                                </div>
                                 <div className="relative">
                                     <span className="absolute left-0 top-1/2 -translate-y-1/2 text-4xl text-muted-foreground font-light">$</span>
                                     <input
