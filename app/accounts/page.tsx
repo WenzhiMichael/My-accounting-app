@@ -24,11 +24,13 @@ export default function AccountsPage() {
         <main className="min-h-screen bg-background p-4 pb-24 space-y-6">
             <header className="flex justify-between items-center pt-8 pb-4">
                 <h1 className="text-3xl font-bold tracking-tight">{t('accounts')}</h1>
-                <Link href="/accounts/new">
-                    <Button size="icon" className="rounded-full shadow-lg">
-                        <Plus className="h-6 w-6" />
-                    </Button>
-                </Link>
+                <div className="flex gap-2">
+                    <Link href="/accounts/new">
+                        <Button size="icon" className="rounded-full shadow-lg">
+                            <Plus className="h-6 w-6" />
+                        </Button>
+                    </Link>
+                </div>
             </header>
 
             <div className="space-y-4">
